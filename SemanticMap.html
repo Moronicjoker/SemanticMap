@@ -1,0 +1,3343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Semantic Map 2025</title>
+    <meta name="description" content="Vanilla JS app scaffold for Semantic Map 2025" />
+    <style>
+      :root {
+        --background: #1a1a1a;
+        --surface: #2a2a2a;
+        --text: #e6e6e6;
+        --muted: #a0a0a0;
+        --primary: #6a6a6a;
+        --primary-pressed: #555555;
+        --radius: 12px;
+      }
+
+      * { box-sizing: border-box; }
+      html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        background: radial-gradient(60% 60% at 50% 0%, #1f1f1f 0%, var(--background) 100%);
+        color: var(--text);
+      }
+
+      .container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      }
+
+      .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      .spacer { height: 16px; }
+
+      button.primary {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        border-radius: 30px;
+        padding: 14px 28px;
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        transition: transform 120ms ease, filter 120ms ease, background 120ms ease;
+      }
+      button.primary:hover { filter: brightness(1.05); }
+      button.primary:active { transform: translateY(1px); background: var(--primary-pressed); }
+      button.ghost {
+        appearance: none;
+        border: 1px solid #404040;
+        background: transparent;
+        color: var(--text);
+        border-radius: 30px;
+        padding: 12px 20px;
+        cursor: pointer;
+      }
+      .muted { color: var(--muted); }
+      code.inline { background: #2a2a2a; padding: 2px 6px; border-radius: 6px; border: 1px solid #404040; }
+
+      /* Semantic map canvas */
+      svg.map {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #101010;
+        cursor: crosshair;
+        user-select: none;
+      }
+
+      svg.map.panning {
+        cursor: grabbing;
+      }
+
+      g.node { cursor: grab; }
+      g.node.dragging { cursor: grabbing; }
+      g.node.selected circle {
+        stroke: #4f8cff !important;
+        stroke-width: 3 !important;
+        stroke-dasharray: 5, 3;
+      }
+
+      /* Selection rectangle */
+      .selection-rect {
+        fill: rgba(79, 140, 255, 0.1);
+        stroke: var(--primary);
+        stroke-width: 2;
+        stroke-dasharray: 4, 4;
+        pointer-events: none;
+      }
+
+      /* Search input */
+      .search-container {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+      }
+
+      .search-wrapper {
+        position: relative;
+        width: 300px;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 10px 40px 10px 12px;
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 3px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .search-clear {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px 8px;
+        line-height: 1;
+        display: none;
+      }
+
+      .search-clear.visible {
+        display: block;
+      }
+
+      .search-clear:hover {
+        color: var(--text);
+      }
+
+      g.node.highlight circle {
+        stroke: white;
+        stroke-width: 3;
+      }
+
+      g.node.dimmed circle {
+        opacity: 0.3;
+        fill: #666;
+      }
+
+      g.node.dimmed text {
+        opacity: 0.3;
+        fill: #999;
+      }
+
+      /* Fly-in panel */
+      .fly-in-panel {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 380px;
+        height: 100%;
+        background: var(--surface);
+        border-left: 1px solid #242838;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+        transition: right 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+      }
+
+      .fly-in-panel.open {
+        right: 0;
+      }
+
+      .fly-in-panel-header {
+        padding: 20px;
+        border-bottom: 1px solid #242838;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .fly-in-panel-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .fly-in-panel-header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .fly-in-panel-delete {
+        background: transparent;
+        border: 1px solid #ff6b6b;
+        color: #ff6b6b;
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+
+      .fly-in-panel-delete:hover {
+        background: rgba(255, 107, 107, 0.1);
+      }
+
+      .fly-in-panel-delete:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .fly-in-panel-close {
+        background: transparent;
+        border: 1px solid #404040;
+        color: var(--text);
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+
+      .fly-in-panel-close:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .fly-in-panel-content {
+        padding: 10px;
+      }
+
+      .fly-in-panel-field {
+        margin-bottom: 20px;
+      }
+
+      .fly-in-panel-field label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .fly-in-panel-field input:not(.todo-item-checkbox),
+      .fly-in-panel-field textarea {
+        width: 100%;
+        padding: 10px 12px;
+        background: #2a2a2a;
+        border: 1px solid #404040;
+        border-radius: 3px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+        resize: vertical;
+      }
+
+      .fly-in-panel-field textarea {
+        min-height: 160px;
+        line-height: 1.5;
+      }
+
+      .color-input-wrapper {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .color-input-wrapper input[type="color"] {
+        width: 60px;
+        height: 40px;
+        border: 1px solid #404040;
+        border-radius: 3px;
+        cursor: pointer;
+        background: var(--surface);
+        padding: 2px;
+      }
+
+      .color-input-wrapper input[type="text"] {
+        flex: 1;
+        padding: 10px 12px;
+        background: #2a2a2a;
+        border: 1px solid #404040;
+        border-radius: 3px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+      }
+
+      .color-input-wrapper input[type="text"]:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .description-preview {
+        margin-top: 8px;
+        padding: 10px 12px;
+        background: #2a2a2a;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 40px;
+        max-height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        cursor: pointer;
+      }
+
+
+      .description-preview a {
+        color: var(--primary);
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .description-preview a:hover {
+        color: #888888;
+      }
+
+      /* Connected nodes */
+      .connected-nodes {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .connected-node-link {
+        padding: 8px 12px;
+        background: #2a2a2a;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: block;
+      }
+
+      .connected-node-link:hover {
+        background: rgba(170, 170, 170, 0.1);
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .connected-nodes-empty {
+        padding: 8px 12px;
+        color: var(--muted);
+        font-size: 14px;
+        font-style: italic;
+      }
+
+      /* Todo list */
+      .todo-container {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+      }
+
+      .todo-item {
+        display: flex;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #2a2a2a;
+        border-radius: 3px;
+        transition: all 0.2s;
+      }
+
+      .todo-item:hover {
+        background: rgba(170, 170, 170, 0.1);
+        border-color: var(--primary);
+      }
+
+      .todo-item:hover .todo-item-delete {
+        opacity: 1;
+      }
+
+      .todo-item-checkbox {
+        width: 18px !important;
+        height: 18px;
+        cursor: pointer;
+        flex-shrink: 0;
+        margin-top: 10px;
+      }
+
+      .todo-item-text {
+        flex: 1;
+        min-width: 0;
+        padding: 2px 4px;
+        margin: 0;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 2px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        cursor: text;
+      }
+
+      .todo-item-text:focus {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 2px;
+        outline: 1px solid var(--primary);
+        outline-offset: -1px;
+      }
+
+      .todo-item-text:disabled {
+        cursor: default;
+      }
+
+      .todo-item.checked .todo-item-text {
+        text-decoration: line-through;
+        opacity: 0.6;
+      }
+
+      .todo-item-delete {
+        opacity: 0;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s;
+        flex-shrink: 0;
+      }
+
+      .todo-item-delete:hover {
+        color: #ff6b6b;
+      }
+
+      .add-todo-btn {
+        padding: 8px 12px;
+        background: #2a2a2a;
+        border: 1px solid #404040;
+        border-radius: 3px;
+        color: var(--text);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .add-todo-btn:hover {
+        background: rgba(170, 170, 170, 0.1);
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .fly-in-panel-field input:focus,
+      .fly-in-panel-field textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .fly-in-panel-field input.duplicate {
+        border-color: #ff6b6b;
+      }
+
+      .title-duplicate-warning {
+        margin-top: 6px;
+        font-size: 12px;
+        color: #ff6b6b;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .fly-in-panel-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .fly-in-panel-actions button {
+        flex: 1;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .fly-in-panel-save {
+        background: var(--primary);
+        color: white;
+        border: none;
+      }
+
+      .fly-in-panel-save:hover {
+        filter: brightness(1.1);
+      }
+
+      .fly-in-panel-cancel {
+        background: transparent;
+        border: 1px solid #404040;
+        color: var(--text);
+      }
+
+      .fly-in-panel-cancel:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Image support */
+      .image-drop-zone {
+        border: 2px dashed #242838;
+        border-radius: 6px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .image-drop-zone:hover {
+        border-color: var(--primary);
+        background: rgba(79, 140, 255, 0.05);
+      }
+
+      .image-drop-zone.dragover {
+        border-color: var(--primary);
+        background: rgba(79, 140, 255, 0.1);
+      }
+
+      .clear-background-btn {
+        margin-top: 12px;
+        padding: 8px 16px;
+        background: transparent;
+        border: 1px solid #404040;
+        color: var(--text);
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+        width: 100%;
+      }
+
+      .clear-background-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--primary);
+      }
+
+      .image-thumbnails {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .image-thumbnail {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        overflow: hidden;
+        cursor: pointer;
+        background: #2a2a2a;
+      }
+
+      .image-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .image-thumbnail.active {
+        border-color: var(--primary);
+        border-width: 2px;
+      }
+
+      /* Image Modal */
+      .image-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10002;
+        cursor: pointer;
+      }
+
+      .image-modal-content {
+        width: 80vw;
+        height: 80vh;
+        max-width: 90vw;
+        max-height: 90vh;
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: default;
+      }
+
+      .image-modal-content img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+      }
+
+      .image-context-menu {
+        position: fixed;
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 6px;
+        padding: 8px 0;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: none;
+      }
+
+      .image-context-menu-item {
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text);
+      }
+
+      .image-context-menu-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Modal dialog */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+      }
+
+      .modal-dialog {
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #242838;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .modal-content {
+        padding: 20px;
+        color: var(--text);
+      }
+
+      .modal-content p {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .modal-warning {
+        color: #ff6b6b;
+        font-size: 13px;
+      }
+
+      .modal-actions {
+        padding: 20px;
+        border-top: 1px solid #242838;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .modal-button {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+
+      .modal-button-cancel {
+        background: transparent;
+        border: 1px solid #404040;
+        color: var(--text);
+      }
+
+      .modal-button-cancel:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .modal-button-confirm {
+        background: #ff6b6b;
+        color: white;
+      }
+
+      .modal-button-confirm:hover {
+        background: #ff5252;
+      }
+
+      /* Timeline bar */
+      .timeline-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background:  rgb(6 6 6 / 90%);
+        backdrop-filter: blur(8px);
+        z-index: 50;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 12px 20px;
+      }
+
+      .timeline-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 100%;
+        height: 100%;
+      }
+
+      .timeline-entry {
+        position: relative;
+        min-width: 50px;
+        width: 60px;
+        height: 68px;
+        background: var(--surface); 
+        border-radius: 3px;
+        padding: 6px 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      .timeline-entry:hover {
+        border-color: var(--primary);
+        background: rgba(79, 140, 255, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .timeline-entry-date {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 500;
+        line-height: 1.2;
+      }
+
+      .timeline-entry-time {
+        font-size: 9px;
+        color: var(--muted);
+        margin-top: 2px;
+        line-height: 1.2;
+      }
+
+      .timeline-entry-title {
+        font-size: 12px;
+        color: var(--text);
+        margin-top: 6px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        text-align: center;
+        line-height: 1.2;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <!-- Search input -->
+      <div class="search-container">
+        <div class="search-wrapper">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search nodes..." />
+          <button id="searchClear" class="search-clear" type="button" aria-label="Clear search">×</button>
+        </div>
+      </div>
+
+      <svg id="semanticMap" class="map" preserveAspectRatio="none" aria-label="Semantic map canvas" role="img"></svg>
+      
+      <!-- Timeline bar -->
+      <div id="timelineBar" class="timeline-bar">
+        <div id="timelineContainer" class="timeline-container"></div>
+      </div>
+      
+      <!-- Hidden editable div for local data persistence -->
+      <div id="semanticMapData" contenteditable="true" style="display: none;">{"nodes":[],"links":[]}</div>
+      
+      <!-- Fly-in panel for editing node -->
+      <div id="flyInPanel" class="fly-in-panel">
+        <div class="fly-in-panel-header">
+          <h2 id="flyInPanelTitle">Edit Node</h2>
+          <div class="fly-in-panel-header-actions">
+            <button class="fly-in-panel-delete" id="flyInPanelDelete" type="button" title="Delete node">Delete</button>
+            <button class="fly-in-panel-close" id="flyInPanelClose" type="button">×</button>
+          </div>
+        </div>
+        <div class="fly-in-panel-content">
+          <div class="fly-in-panel-field">
+            <label for="nodeTitleInput">Title</label>
+            <input type="text" id="nodeTitleInput" placeholder="Enter node title" />
+            <div id="titleDuplicateWarning" class="title-duplicate-warning" style="display: none;">
+              This title already exists
+            </div>
+          </div>
+          <div class="fly-in-panel-field">
+            <label for="nodeDescriptionInput">Description</label>
+            <textarea id="nodeDescriptionInput" placeholder="Enter node description or notes. URLs will be automatically converted to clickable links." rows="8"></textarea>
+            <div id="descriptionPreview" class="description-preview"></div>
+          </div>
+          <div class="fly-in-panel-field">
+            <label>Images</label>
+            <div id="imageDropZone" class="image-drop-zone">
+              <div>Drop images here or click to select</div>
+            </div>
+            <input type="file" id="imageFileInput" accept="image/*" multiple style="display: none;" />
+            <button id="clearBackgroundBtn" class="clear-background-btn" type="button" style="display: none;">Clear Background</button>
+            <div id="imageThumbnails" class="image-thumbnails"></div>
+          </div>
+          <div class="fly-in-panel-field">
+            <label>Connected Nodes</label>
+            <div id="connectedNodes" class="connected-nodes"></div>
+          </div>
+          <div class="fly-in-panel-field">
+            <label>Todo List</label>
+            <div id="todoContainer" class="todo-container"></div>
+            <button id="addTodoItemBtn" class="add-todo-btn" type="button">+ Add Item</button>
+          </div>
+          <div class="fly-in-panel-field">
+            <label for="nodeColorInput">Color</label>
+            <div class="color-input-wrapper">
+              <input type="color" id="nodeColorInput" value="#6a6a6a" />
+              <input type="text" id="nodeColorHexInput" placeholder="#6a6a6a" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" />
+            </div>
+          </div>
+        </div>
+      
+      <!-- Context menu for image thumbnails -->
+      <div id="imageContextMenu" class="image-context-menu">
+        <div class="image-context-menu-item" id="setAsBackground">Set as Background</div>
+        <div class="image-context-menu-item" id="deleteImage">Delete</div>
+      </div>
+      </div>
+
+      <!-- Image preview modal -->
+      <div id="imageModal" class="image-modal-overlay" style="display: none;">
+        <div class="image-modal-content">
+          <img id="imageModalImg" src="" alt="Preview" />
+        </div>
+      </div>
+
+      <!-- Delete confirmation modal -->
+      <div id="deleteConfirmModal" class="modal-overlay" style="display: none;">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3>Confirm Deletion</h3>
+          </div>
+          <div class="modal-content">
+            <p>Are you sure you want to delete this node? This action cannot be undone.</p>
+            <p class="modal-warning">All connections to this node will also be removed.</p>
+          </div>
+          <div class="modal-actions">
+            <button id="modalCancel" class="modal-button modal-button-cancel">Cancel</button>
+            <button id="modalConfirm" class="modal-button modal-button-confirm">Delete</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        let currentData = { nodes: [], links: [] };
+        let draggingId = null;
+        let isConnecting = false;
+        let connectSourceId = null;
+        let tempLineEl = null;
+        let suppressNextBackgroundClick = false;
+        let editingNodeId = null;
+        let originalEditingNodeId = null;
+        let creatingNodeAt = null; // {x, y} when creating a new node
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+        let viewBoxX = 0;
+        let viewBoxY = 0;
+        let zoomScale = 1.0;
+        let searchQuery = "";
+        let selectedImageIndex = null;
+        let modalImageIndex = null; // Current image index displayed in modal
+        let modalNodeId = null; // Node ID whose images are being viewed in modal
+        let isBoxSelecting = false; // Whether box selection is active
+        let boxSelectStart = null; // {x, y} where box selection started
+        let boxSelectRect = null; // SVG rectangle element for selection box
+        let boxSelectShiftKey = false; // Whether shift was held when box selection started
+        let selectedNodeIds = new Set(); // Set of selected node IDs
+        let groupDragOffset = null; // {x, y} offset when starting group drag
+        let potentialBoxSelectStart = null; // Potential start point for box selection (activated on mouse move)
+        let nodeDragStartPos = null; // {x, y} where node drag started (to detect if it was a click vs drag)
+        const NODE_CLICK_TOLERANCE = 5; // Maximum pixel movement allowed for a click (vs drag)
+
+        function initializeApp() {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+
+          // Load data from hidden div
+          const dataDiv = document.getElementById("semanticMapData");
+          let initialData = { nodes: [], links: [] };
+          
+          if (dataDiv && dataDiv.textContent) {
+            try {
+              initialData = JSON.parse(dataDiv.textContent);
+              if (!Array.isArray(initialData.nodes)) initialData.nodes = [];
+              if (!Array.isArray(initialData.links)) initialData.links = [];
+            } catch (e) {
+              console.warn("Failed to parse stored data, starting with empty map");
+              initialData = { nodes: [], links: [] };
+            }
+          }
+
+          generateSemanticMap(initialData);
+          
+          // Update viewBox on resize to prevent distortion
+          // Use setTimeout to ensure SVG is rendered before getting dimensions
+          setTimeout(() => {
+            const svg = document.getElementById("semanticMap");
+            if (svg) {
+              const vb = svg.viewBox.baseVal;
+              viewBoxX = vb.x || 0;
+              viewBoxY = vb.y || 0;
+            }
+            updateViewBox();
+            render(); // Re-render with correct viewBox
+            
+            // Zoom and pan to fit all nodes on initial load
+            if (currentData.nodes.length > 0) {
+              zoomToAllNodes();
+            }
+          }, 0);
+          window.addEventListener("resize", () => {
+            // Preserve pan position when resizing
+            updateViewBox();
+            render(); // Re-render when window resizes
+          });
+
+          // Box selection and click handlers
+          svg.addEventListener("pointerdown", (event) => {
+            // Only react to background clicks, not on nodes/labels
+            if (event.target !== svg && event.target.tagName !== "svg") return;
+            // Ignore during drag or connect operations
+            if (suppressNextBackgroundClick) { suppressNextBackgroundClick = false; return; }
+            if (draggingId || isConnecting || isPanning) return;
+            // Don't start selection if search input has focus
+            const searchInput = document.getElementById("searchInput");
+            if (searchInput && document.activeElement === searchInput) return;
+            // Don't start selection on middle mouse button
+            if (event.button === 1) return;
+            
+            const point = getSvgPoint(svg, event);
+            if (!point) return;
+            
+            // Store potential box select start, but don't activate yet
+            // Only activate if mouse moves significantly
+            potentialBoxSelectStart = point;
+            event.preventDefault();
+          });
+
+          svg.addEventListener("click", (event) => {
+            // Only react to background clicks, not on nodes/labels
+            if (event.target !== svg && event.target.tagName !== "svg") return;
+            // Ignore during drag or connect operations or if box selection just happened
+            if (suppressNextBackgroundClick) { suppressNextBackgroundClick = false; return; }
+            if (draggingId || isConnecting || isBoxSelecting) return;
+            // Don't create node if search input has focus
+            const searchInput = document.getElementById("searchInput");
+            if (searchInput && document.activeElement === searchInput) return;
+            
+            // If nodes are selected, deselect them
+            if (selectedNodeIds.size > 0) {
+              selectedNodeIds.clear();
+              render();
+              closeFlyInPanel(); // Close fly-in panel when deselecting
+              suppressNextBackgroundClick = true;
+              return;
+            }
+            
+            // Check if box selection might be starting - delay node creation slightly
+            // to give pointermove a chance to activate box selection
+            if (potentialBoxSelectStart) {
+              // Capture the point before delay
+              const point = potentialBoxSelectStart; // Use the same point where pointerdown occurred
+              // Small delay to allow box selection to activate if mouse is being dragged
+              setTimeout(() => {
+                // Check again if box selection activated
+                if (isBoxSelecting || suppressNextBackgroundClick) {
+                  suppressNextBackgroundClick = false;
+                  return;
+                }
+                // Box selection didn't activate, so this was just a click - create node
+                if (!point) return;
+                creatingNodeAt = { x: point.x, y: point.y };
+                openFlyInPanelForNewNode();
+              }, 50); // Small delay to allow box selection to activate
+              return;
+            }
+            
+            const point = getSvgPoint(svg, event);
+            if (!point) return;
+            // Store click position and open fly-in panel for new node creation
+            creatingNodeAt = { x: point.x, y: point.y };
+            openFlyInPanelForNewNode();
+          });
+          // Drag handlers
+          svg.addEventListener("pointermove", onPointerMove);
+          svg.addEventListener("pointerup", onPointerUp);
+          svg.addEventListener("pointerleave", onPointerUp);
+
+          // Panning handlers (middle mouse button)
+          svg.addEventListener("mousedown", onMouseDown);
+          svg.addEventListener("mousemove", onMouseMove);
+          svg.addEventListener("mouseup", onMouseUp);
+          svg.addEventListener("mouseleave", onMouseUp);
+          // Prevent context menu on middle mouse button
+          svg.addEventListener("contextmenu", (e) => {
+            if (e.button === 1) e.preventDefault();
+          });
+
+          // Zoom handler (mouse wheel)
+          svg.addEventListener("wheel", onWheel, { passive: false });
+
+          // Search input handlers
+          const searchInput = document.getElementById("searchInput");
+          const searchClear = document.getElementById("searchClear");
+          
+          if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+              searchQuery = e.target.value.trim();
+              updateSearchClearVisibility();
+              render(); // Re-render to apply highlighting
+              // Zoom and pan to fit search results if there are any
+              if (searchQuery) {
+                setTimeout(() => zoomToSearchResults(), 50); // Small delay to ensure render is complete
+              }
+            });
+          }
+          
+          if (searchClear) {
+            searchClear.addEventListener("click", () => {
+              if (searchInput) {
+                searchInput.value = "";
+                searchQuery = "";
+                updateSearchClearVisibility();
+                render(); // Re-render to remove highlighting
+              }
+            });
+          }
+
+          // Fly-in panel handlers
+          const closeBtn = document.getElementById("flyInPanelClose");
+          const titleInput = document.getElementById("nodeTitleInput");
+
+          if (closeBtn) {
+            closeBtn.addEventListener("click", closeFlyInPanel);
+          }
+
+          // Delete button handler
+          const deleteBtn = document.getElementById("flyInPanelDelete");
+          if (deleteBtn) {
+            deleteBtn.addEventListener("click", () => {
+              if (editingNodeId !== null) {
+                showDeleteConfirmModal();
+              }
+            });
+          }
+
+          // Modal handlers
+          const modalCancel = document.getElementById("modalCancel");
+          const modalConfirm = document.getElementById("modalConfirm");
+          const modalOverlay = document.getElementById("deleteConfirmModal");
+
+          if (modalCancel) {
+            modalCancel.addEventListener("click", hideDeleteConfirmModal);
+          }
+
+          if (modalConfirm) {
+            modalConfirm.addEventListener("click", () => {
+              if (editingNodeId !== null) {
+                deleteNode(editingNodeId);
+                hideDeleteConfirmModal();
+              }
+            });
+          }
+
+          // Close modal when clicking outside
+          if (modalOverlay) {
+            modalOverlay.addEventListener("click", (e) => {
+              if (e.target === modalOverlay) {
+                hideDeleteConfirmModal();
+              }
+            });
+          }
+          if (titleInput) {
+            // Update title on every keystroke
+            titleInput.addEventListener("input", updateNodeTitleOnInput);
+            
+            // Handle description input
+            const descriptionInput = document.getElementById("nodeDescriptionInput");
+            const descriptionPreview = document.getElementById("descriptionPreview");
+            if (descriptionInput) {
+              descriptionInput.addEventListener("input", updateNodeDescriptionOnInput);
+              
+              // When input gains focus, show it and hide preview
+              descriptionInput.addEventListener("focus", () => {
+                descriptionInput.style.display = "block";
+                if (descriptionPreview) {
+                  descriptionPreview.style.display = "none";
+                }
+              });
+              
+              // When input loses focus, hide it and show preview
+              descriptionInput.addEventListener("blur", () => {
+                // Update preview with current content
+                updateDescriptionPreview();
+                descriptionInput.style.display = "none";
+                if (descriptionPreview) {
+                  // Only show preview if there's content
+                  if (descriptionInput.value.trim()) {
+                    descriptionPreview.style.display = "block";
+                  } else {
+                    descriptionPreview.style.display = "none";
+                  }
+                }
+              });
+            }
+
+            // Click on preview to edit - show input and focus it
+            if (descriptionPreview) {
+              descriptionPreview.addEventListener("click", (e) => {
+                // Prevent link clicks from triggering this
+                if (e.target.tagName === 'A') {
+                  return;
+                }
+                if (descriptionInput) {
+                  descriptionInput.style.display = "block";
+                  descriptionPreview.style.display = "none";
+                  setTimeout(() => {
+                    descriptionInput.focus();
+                    // Set cursor at end of text
+                    descriptionInput.setSelectionRange(descriptionInput.value.length, descriptionInput.value.length);
+                  }, 10);
+                }
+              });
+            }
+
+            // Handle color inputs
+            const colorInput = document.getElementById("nodeColorInput");
+            const colorHexInput = document.getElementById("nodeColorHexInput");
+            
+            if (colorInput && colorHexInput) {
+              // Sync color picker with hex input
+              colorInput.addEventListener("input", (e) => {
+                colorHexInput.value = e.target.value.toUpperCase();
+                updateNodeColor(e.target.value);
+              });
+              
+              // Sync hex input with color picker
+              colorHexInput.addEventListener("input", (e) => {
+                const hex = e.target.value;
+                // Validate hex color
+                if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) {
+                  colorInput.value = hex;
+                  updateNodeColor(hex);
+                }
+              });
+            }
+            
+            titleInput.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") {
+                closeFlyInPanel();
+              } else if (e.key === "Enter") {
+                e.preventDefault();
+                closeFlyInPanel();
+              }
+            });
+          }
+
+          // Image handlers
+          const imageDropZone = document.getElementById("imageDropZone");
+          const imageFileInput = document.getElementById("imageFileInput");
+          const imageContextMenu = document.getElementById("imageContextMenu");
+          const setAsBackgroundBtn = document.getElementById("setAsBackground");
+
+          if (imageDropZone && imageFileInput) {
+            // Click to select files
+            imageDropZone.addEventListener("click", () => {
+              imageFileInput.click();
+            });
+
+            // File input change
+            imageFileInput.addEventListener("change", (e) => {
+              handleImageFiles(Array.from(e.target.files));
+            });
+
+            // Drag and drop
+            imageDropZone.addEventListener("dragover", (e) => {
+              e.preventDefault();
+              imageDropZone.classList.add("dragover");
+            });
+
+            imageDropZone.addEventListener("dragleave", () => {
+              imageDropZone.classList.remove("dragover");
+            });
+
+            imageDropZone.addEventListener("drop", (e) => {
+              e.preventDefault();
+              imageDropZone.classList.remove("dragover");
+              const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"));
+              handleImageFiles(files);
+            });
+          }
+
+          // Paste image from clipboard
+          document.addEventListener("paste", (e) => {
+            // Only handle paste when fly-in panel is open and editing a node
+            const flyInPanel = document.getElementById("flyInPanel");
+            if (!flyInPanel || !flyInPanel.classList.contains("open") || !editingNodeId) {
+              return;
+            }
+
+            // Check if clipboard contains image data
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            const imageItems = Array.from(items).filter(item => item.type.startsWith("image/"));
+            if (imageItems.length === 0) return;
+
+            // Prevent default paste behavior for images
+            e.preventDefault();
+
+            // Process each image item
+            imageItems.forEach(item => {
+              const file = item.getAsFile();
+              if (file) {
+                handleImageFiles([file]);
+              }
+            });
+          });
+
+          if (setAsBackgroundBtn) {
+            setAsBackgroundBtn.addEventListener("click", () => {
+              if (selectedImageIndex !== null && editingNodeId !== null) {
+                setNodeBackgroundImage(selectedImageIndex);
+                imageContextMenu.style.display = "none";
+              }
+            });
+          }
+
+          const deleteImageBtn = document.getElementById("deleteImage");
+          if (deleteImageBtn) {
+            deleteImageBtn.addEventListener("click", () => {
+              if (selectedImageIndex !== null && editingNodeId !== null) {
+                deleteImage(selectedImageIndex);
+                imageContextMenu.style.display = "none";
+              }
+            });
+          }
+
+          // Clear background button
+          const clearBackgroundBtn = document.getElementById("clearBackgroundBtn");
+          if (clearBackgroundBtn) {
+            clearBackgroundBtn.addEventListener("click", () => {
+              if (editingNodeId !== null) {
+                clearNodeBackgroundImage();
+              }
+            });
+          }
+
+          // Todo list add button
+          const addTodoItemBtn = document.getElementById("addTodoItemBtn");
+          if (addTodoItemBtn) {
+            addTodoItemBtn.addEventListener("click", () => {
+              if (editingNodeId !== null) {
+                addTodoItem(editingNodeId);
+              }
+            });
+          }
+
+          // Close context menu on click outside
+          document.addEventListener("click", (e) => {
+            if (!imageContextMenu.contains(e.target)) {
+              imageContextMenu.style.display = "none";
+            }
+          });
+
+          // Image modal close handler - close when clicking anywhere
+          const imageModal = document.getElementById("imageModal");
+          if (imageModal) {
+            imageModal.addEventListener("click", (e) => {
+              // Close when clicking anywhere (overlay, content, or image)
+              closeImageModal();
+            });
+            
+            // Keyboard navigation for image modal
+            document.addEventListener("keydown", (e) => {
+              // Only handle keys when modal is open
+              if (imageModal.style.display === "none" || imageModal.style.display === "") {
+                return;
+              }
+              
+              if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                navigateModalImage("prev"); // Left arrow = previous image (wrap to last at first)
+              } else if (e.key === "ArrowRight") {
+                e.preventDefault();
+                navigateModalImage("next"); // Right arrow = next image (wrap to first at last)
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                closeImageModal(); // Escape key closes the modal
+              }
+            });
+          }
+
+          // Right-click on thumbnails
+          document.addEventListener("contextmenu", (e) => {
+            const thumbnail = e.target.closest(".image-thumbnail");
+            if (thumbnail) {
+              e.preventDefault();
+              selectedImageIndex = parseInt(thumbnail.getAttribute("data-index"));
+              imageContextMenu.style.display = "block";
+              imageContextMenu.style.left = e.pageX + "px";
+              imageContextMenu.style.top = e.pageY + "px";
+            }
+          });
+
+          // Initialize timeline
+          updateTimeline();
+        }
+
+        function updateTimeline() {
+          const container = document.getElementById("timelineContainer");
+          if (!container) return;
+
+          container.innerHTML = "";
+
+          // Sort nodes by creation date (ID = timestamp)
+          const sortedNodes = [...currentData.nodes].sort((a, b) => a.id - b.id);
+
+          sortedNodes.forEach(node => {
+            const entry = document.createElement("div");
+            entry.className = "timeline-entry";
+            entry.setAttribute("data-node-id", node.id);
+
+            // Format date from timestamp
+            const date = new Date(node.id);
+            const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            const dateEl = document.createElement("div");
+            dateEl.className = "timeline-entry-date";
+            dateEl.textContent = dateStr;
+
+            const timeEl = document.createElement("div");
+            timeEl.className = "timeline-entry-time";
+            timeEl.textContent = timeStr;
+
+            const titleEl = document.createElement("div");
+            titleEl.className = "timeline-entry-title";
+            titleEl.textContent = node.title || "Untitled";
+            titleEl.title = node.title || "Untitled"; // Tooltip for full text
+
+            entry.appendChild(dateEl);
+            entry.appendChild(timeEl);
+            entry.appendChild(titleEl);
+            
+            // Ensure title is always visible - if empty, show "Untitled"
+            if (!titleEl.textContent || titleEl.textContent.trim() === "") {
+              titleEl.textContent = "Untitled";
+            }
+
+            // Click handler to zoom and pan to node, and open fly-in panel
+            entry.addEventListener("click", () => {
+              zoomToNode(node.id);
+              openFlyInPanel(node.id);
+            });
+
+            container.appendChild(entry);
+          });
+        }
+
+        function zoomToNode(nodeId) {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+
+          const node = currentData.nodes.find(n => n.id === nodeId);
+          if (!node) return;
+
+          // Get viewBox calculation helpers (same logic as render)
+          const viewBox = svg.viewBox.baseVal;
+          const width = viewBox.width || svg.clientWidth || 1000;
+          const height = viewBox.height || svg.clientHeight || 600;
+          const centerX = width / 2;
+          const centerY = height / 2;
+          const radius = Math.min(width, height) * 0.35;
+          const nodeCount = currentData.nodes.length || 1;
+          const nodeIndex = currentData.nodes.findIndex(n => n.id === nodeId);
+
+          // Calculate node position
+          const hasFixed = typeof node.x === "number" && typeof node.y === "number";
+          const angle = (nodeIndex / nodeCount) * Math.PI * 2;
+          const nodeX = hasFixed ? node.x : centerX + radius * Math.cos(angle);
+          const nodeY = hasFixed ? node.y : centerY + radius * Math.sin(angle);
+
+          // Get SVG dimensions
+          const rect = svg.getBoundingClientRect();
+          const svgWidth = rect.width;
+          const svgHeight = rect.height;
+
+          // Use the same zoom calculation as search results for a single node
+          // Create a bounding box around the node (same logic as zoomToSearchResults)
+          const nodeRadius = 14;
+          const padding = 40;
+          const minX = nodeX - nodeRadius - padding;
+          const minY = nodeY - nodeRadius - padding;
+          const maxX = nodeX + nodeRadius + padding;
+          const maxY = nodeY + nodeRadius + padding;
+          
+          const boundingWidth = maxX - minX;
+          const boundingHeight = maxY - minY;
+          const boundingCenterX = (minX + maxX) / 2;
+          const boundingCenterY = (minY + maxY) / 2;
+          
+          // Calculate zoom to fit (with some margin) - same as search results
+          const zoomX = svgWidth / boundingWidth;
+          const zoomY = svgHeight / boundingHeight;
+          const newZoom = Math.min(zoomX, zoomY) * 0.9; // 0.9 to add some margin
+          
+          // Clamp zoom
+          const clampedZoom = Math.max(0.1, Math.min(10, newZoom));
+
+          // Calculate viewBox
+          const viewBoxWidth = svgWidth / clampedZoom;
+          const viewBoxHeight = svgHeight / clampedZoom;
+
+          // Center the view on the node's bounding box center
+          const newViewBoxX = boundingCenterX - viewBoxWidth / 2;
+          const newViewBoxY = boundingCenterY - viewBoxHeight / 2;
+
+          // Update zoom and pan
+          zoomScale = clampedZoom;
+          viewBoxX = newViewBoxX;
+          viewBoxY = newViewBoxY;
+
+          updateViewBox(newViewBoxX, newViewBoxY, clampedZoom);
+          render(); // Re-render with new view
+        }
+
+        function updateSearchClearVisibility() {
+          const searchClear = document.getElementById("searchClear");
+          const searchInput = document.getElementById("searchInput");
+          if (searchClear && searchInput) {
+            if (searchInput.value.trim().length > 0) {
+              searchClear.classList.add("visible");
+            } else {
+              searchClear.classList.remove("visible");
+            }
+          }
+        }
+
+        function zoomToAllNodes() {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          if (currentData.nodes.length === 0) return;
+          
+          // Get viewBox calculation helpers (same logic as render)
+          const viewBox = svg.viewBox.baseVal;
+          const width = viewBox.width || svg.clientWidth || 1000;
+          const height = viewBox.height || svg.clientHeight || 600;
+          const centerX = width / 2;
+          const centerY = height / 2;
+          const radius = Math.min(width, height) * 0.35;
+          const nodeCount = currentData.nodes.length || 1;
+          
+          // Calculate positions for all nodes
+          const positions = currentData.nodes.map(node => {
+            const hasFixed = typeof node.x === "number" && typeof node.y === "number";
+            const nodeIndex = currentData.nodes.findIndex(n => n.id === node.id);
+            const angle = (nodeIndex / nodeCount) * Math.PI * 2;
+            const x = hasFixed ? node.x : centerX + radius * Math.cos(angle);
+            const y = hasFixed ? node.y : centerY + radius * Math.sin(angle);
+            return { x, y };
+          });
+          
+          // Calculate bounding box
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          const nodeRadius = 14; // Radius of node circle
+          const padding = 40; // Extra padding around nodes
+          
+          positions.forEach(p => {
+            minX = Math.min(minX, p.x - nodeRadius - padding);
+            minY = Math.min(minY, p.y - nodeRadius - padding);
+            maxX = Math.max(maxX, p.x + nodeRadius + padding);
+            maxY = Math.max(maxY, p.y + nodeRadius + padding);
+          });
+          
+          const boundingWidth = maxX - minX;
+          const boundingHeight = maxY - minY;
+          const boundingCenterX = (minX + maxX) / 2;
+          const boundingCenterY = (minY + maxY) / 2;
+          
+          // Get SVG dimensions
+          const rect = svg.getBoundingClientRect();
+          const svgWidth = rect.width;
+          const svgHeight = rect.height;
+          
+          // Calculate zoom to fit (with some margin)
+          const zoomX = svgWidth / boundingWidth;
+          const zoomY = svgHeight / boundingHeight;
+          const newZoom = Math.min(zoomX, zoomY) * 0.9; // 0.9 to add some margin
+          
+          // Clamp zoom
+          const clampedZoom = Math.max(0.1, Math.min(10, newZoom));
+          
+          // Calculate viewBox
+          const viewBoxWidth = svgWidth / clampedZoom;
+          const viewBoxHeight = svgHeight / clampedZoom;
+          
+          // Center the bounding box
+          const newViewBoxX = boundingCenterX - viewBoxWidth / 2;
+          const newViewBoxY = boundingCenterY - viewBoxHeight / 2;
+          
+          // Update zoom and pan
+          zoomScale = clampedZoom;
+          viewBoxX = newViewBoxX;
+          viewBoxY = newViewBoxY;
+          
+          updateViewBox(newViewBoxX, newViewBoxY, clampedZoom);
+          render(); // Re-render with new view
+        }
+
+        function zoomToSearchResults() {
+          if (!searchQuery) return;
+          
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          // Find all matching nodes
+          const matchingNodes = currentData.nodes.filter(node => {
+            const nodeTitle = (node.title || "").toLowerCase();
+            const queryLower = searchQuery.toLowerCase();
+            return nodeTitle.includes(queryLower);
+          });
+          
+          if (matchingNodes.length === 0) return;
+          
+          // Get viewBox calculation helpers (same logic as render)
+          const viewBox = svg.viewBox.baseVal;
+          const width = viewBox.width || svg.clientWidth || 1000;
+          const height = viewBox.height || svg.clientHeight || 600;
+          const centerX = width / 2;
+          const centerY = height / 2;
+          const radius = Math.min(width, height) * 0.35;
+          const nodeCount = currentData.nodes.length || 1;
+          
+          // Calculate positions for matching nodes
+          const positions = matchingNodes.map(node => {
+            const hasFixed = typeof node.x === "number" && typeof node.y === "number";
+            const nodeIndex = currentData.nodes.findIndex(n => n.id === node.id);
+            const angle = (nodeIndex / nodeCount) * Math.PI * 2;
+            const x = hasFixed ? node.x : centerX + radius * Math.cos(angle);
+            const y = hasFixed ? node.y : centerY + radius * Math.sin(angle);
+            return { x, y };
+          });
+          
+          // Calculate bounding box
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          const nodeRadius = 14; // Radius of node circle
+          const padding = 40; // Extra padding around nodes
+          
+          positions.forEach(p => {
+            minX = Math.min(minX, p.x - nodeRadius - padding);
+            minY = Math.min(minY, p.y - nodeRadius - padding);
+            maxX = Math.max(maxX, p.x + nodeRadius + padding);
+            maxY = Math.max(maxY, p.y + nodeRadius + padding);
+          });
+          
+          const boundingWidth = maxX - minX;
+          const boundingHeight = maxY - minY;
+          const boundingCenterX = (minX + maxX) / 2;
+          const boundingCenterY = (minY + maxY) / 2;
+          
+          // Get SVG dimensions
+          const rect = svg.getBoundingClientRect();
+          const svgWidth = rect.width;
+          const svgHeight = rect.height;
+          
+          // Calculate zoom to fit (with some margin)
+          const zoomX = svgWidth / boundingWidth;
+          const zoomY = svgHeight / boundingHeight;
+          const newZoom = Math.min(zoomX, zoomY) * 0.9; // 0.9 to add some margin
+          
+          // Clamp zoom
+          const clampedZoom = Math.max(0.1, Math.min(10, newZoom));
+          
+          // Calculate viewBox
+          const viewBoxWidth = svgWidth / clampedZoom;
+          const viewBoxHeight = svgHeight / clampedZoom;
+          
+          // Center the bounding box
+          const newViewBoxX = boundingCenterX - viewBoxWidth / 2;
+          const newViewBoxY = boundingCenterY - viewBoxHeight / 2;
+          
+          // Update zoom and pan
+          zoomScale = clampedZoom;
+          viewBoxX = newViewBoxX;
+          viewBoxY = newViewBoxY;
+          
+          updateViewBox(newViewBoxX, newViewBoxY, clampedZoom);
+        }
+
+        function updateViewBox(newX = null, newY = null, newZoom = null) {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          const rect = svg.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            // Use new values if provided, otherwise keep current values
+            if (newX !== null) viewBoxX = newX;
+            if (newY !== null) viewBoxY = newY;
+            if (newZoom !== null) zoomScale = Math.max(0.1, Math.min(10, newZoom)); // Limit zoom between 0.1x and 10x
+            
+            const viewBoxWidth = rect.width / zoomScale;
+            const viewBoxHeight = rect.height / zoomScale;
+            
+            svg.setAttribute("viewBox", `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+          }
+        }
+
+        function saveDataToDiv() {
+          const dataDiv = document.getElementById("semanticMapData");
+          if (dataDiv) {
+            dataDiv.textContent = JSON.stringify(currentData, null, 2);
+          }
+        }
+
+        function generateSemanticMap(data) {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          // store state and migrate old data format if needed
+          const migratedNodes = Array.isArray(data.nodes) ? data.nodes.map(node => {
+            // Migrate old format where id was the title
+            if (typeof node.id === 'string' && !node.title) {
+              // Generate unique timestamp-based ID
+              let newId = Date.now();
+              const existingNodes = data.nodes || [];
+              while (existingNodes.some(n => (typeof n.id === 'number' && n.id === newId) || 
+                                              (typeof n.id === 'string' && !n.title && n.id === node.id && n !== node))) {
+                newId = Date.now() + Math.random();
+              }
+              return {
+                id: newId,
+                title: node.id, // Use old id as title
+                x: node.x,
+                y: node.y
+              };
+            }
+            // Ensure title exists (fallback to empty string) and initialize images array
+            return {
+              ...node,
+              title: node.title || "",
+              description: node.description || "",
+              color: node.color || "#6a6a6a",
+              images: node.images || [],
+              backgroundImage: node.backgroundImage || null,
+              todos: node.todos || []
+            };
+          }) : [];
+          
+          currentData = {
+            nodes: migratedNodes,
+            links: Array.isArray(data.links) ? [...data.links] : []
+          };
+          render();
+          saveDataToDiv();
+          updateTimeline(); // Update timeline on load
+        }
+
+        function render() {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          // Preserve selection rectangle during box selection
+          const preserveRect = isBoxSelecting && boxSelectRect;
+          if (preserveRect) {
+            svg.removeChild(boxSelectRect);
+          }
+          
+          while (svg.firstChild) svg.removeChild(svg.firstChild);
+          
+          // Restore selection rectangle if box selecting
+          if (preserveRect) {
+            svg.appendChild(boxSelectRect);
+          }
+
+          // Create defs element for clip paths
+          const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+          svg.appendChild(defs);
+
+          // Get current viewBox dimensions
+          const viewBox = svg.viewBox.baseVal;
+          const width = viewBox.width || svg.clientWidth || 1000;
+          const height = viewBox.height || svg.clientHeight || 600;
+          const centerX = width / 2;
+          const centerY = height / 2;
+
+          const radius = Math.min(width, height) * 0.35;
+          const nodeCount = currentData.nodes.length || 1;
+
+          const idToPosition = new Map();
+          currentData.nodes.forEach((node, index) => {
+            const hasFixed = typeof node.x === "number" && typeof node.y === "number";
+            const angle = (index / nodeCount) * Math.PI * 2;
+            const x = hasFixed ? node.x : centerX + radius * Math.cos(angle);
+            const y = hasFixed ? node.y : centerY + radius * Math.sin(angle);
+            idToPosition.set(node.id, { x, y });
+          });
+
+          const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          edgesGroup.setAttribute("stroke", "#505050");
+          edgesGroup.setAttribute("stroke-width", "1");
+          edgesGroup.setAttribute("fill", "none");
+
+          (currentData.links || []).forEach(link => {
+            const a = idToPosition.get(link.source);
+            const b = idToPosition.get(link.target);
+            if (!a || !b) return;
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", String(a.x));
+            line.setAttribute("y1", String(a.y));
+            line.setAttribute("x2", String(b.x));
+            line.setAttribute("y2", String(b.y));
+            line.setAttribute("stroke-width", "1");
+            edgesGroup.appendChild(line);
+          });
+          svg.appendChild(edgesGroup);
+
+          const nodesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          currentData.nodes.forEach(node => {
+            const p = idToPosition.get(node.id);
+            if (!p) return;
+
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group.classList.add("node");
+            group.setAttribute("data-id", node.id);
+            
+            // Check if node is selected
+            if (selectedNodeIds.has(node.id)) {
+              group.classList.add("selected");
+            }
+            
+            // Check if node matches search query (search by title, not ID)
+            let isHighlighted = false;
+            let isDimmed = false;
+            if (searchQuery) {
+              const nodeTitle = node.title || "";
+              const nodeTitleLower = nodeTitle.toLowerCase();
+              const queryLower = searchQuery.toLowerCase();
+              if (nodeTitleLower.includes(queryLower)) {
+                isHighlighted = true;
+                group.classList.add("highlight");
+              } else {
+                isDimmed = true;
+                group.classList.add("dimmed");
+              }
+            }
+            
+            group.addEventListener("pointerdown", onNodePointerDown);
+            // Double-click is now handled manually in onNodePointerDown with tolerance
+
+            // Create group for circle and background image
+            const circleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            
+            // Add background image if present
+            if (node.backgroundImage) {
+              const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+              image.setAttributeNS("http://www.w3.org/1999/xlink", "href", node.backgroundImage);
+              image.setAttribute("x", String(p.x - 13.5));
+              image.setAttribute("y", String(p.y - 13.5));
+              image.setAttribute("width", "27");
+              image.setAttribute("height", "27");
+              image.setAttribute("clip-path", "url(#clip-circle-" + node.id + ")");
+              image.setAttribute("preserveAspectRatio", "xMidYMid slice");
+              circleGroup.appendChild(image);
+            }
+
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", String(p.x));
+            circle.setAttribute("cy", String(p.y));
+            circle.setAttribute("r", "14");
+            
+            // Create clip path for background image
+            if (node.backgroundImage) {
+              const defs = svg.querySelector("defs");
+              if (defs) {
+                // Check if clip path already exists
+                let clipPath = defs.querySelector("#clip-circle-" + node.id);
+                if (!clipPath) {
+                  clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+                  clipPath.setAttribute("id", "clip-circle-" + node.id);
+                  const clipCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                  clipCircle.setAttribute("cx", String(p.x));
+                  clipCircle.setAttribute("cy", String(p.y));
+                  clipCircle.setAttribute("r", "14");
+                  clipPath.appendChild(clipCircle);
+                  defs.appendChild(clipPath);
+                } else {
+                  // Update existing clip path position
+                  const clipCircle = clipPath.querySelector("circle");
+                  if (clipCircle) {
+                    clipCircle.setAttribute("cx", String(p.x));
+                    clipCircle.setAttribute("cy", String(p.y));
+                  }
+                }
+              }
+            }
+            
+            // Apply visual styling based on search
+            const nodeColor = node.color || "#6a6a6a";
+            if (isDimmed) {
+              circle.setAttribute("fill", "#666");
+              circle.setAttribute("opacity", "0.3");
+            } else {
+              circle.setAttribute("fill", node.backgroundImage ? "none" : nodeColor);
+              circle.setAttribute("opacity", "1");
+            }
+            
+            // Apply stroke: search highlight takes precedence, then selection, then default
+            if (isHighlighted) {
+              circle.setAttribute("stroke", "white");
+              circle.setAttribute("stroke-width", "3");
+            } else if (selectedNodeIds.has(node.id)) {
+              // Selected nodes: CSS will handle the dashed border via .selected class
+              // Don't set stroke here - let CSS handle it completely via .selected class
+              // Just ensure default stroke is set so CSS can override it
+              const strokeColor = node.backgroundImage ? nodeColor : "#3e3e3e";
+              circle.setAttribute("stroke", strokeColor);
+              circle.setAttribute("stroke-width", "2");
+            } else {
+              // Use node color for stroke when background image is set
+              const strokeColor = node.backgroundImage ? nodeColor : "#3e3e3e";
+              circle.setAttribute("stroke", strokeColor);
+              circle.setAttribute("stroke-width", "2");
+            }
+            
+            circleGroup.appendChild(circle);
+            group.appendChild(circleGroup);
+
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("x", String(p.x));
+            label.setAttribute("y", String(p.y + 36));
+            label.setAttribute("text-anchor", "middle");
+            label.setAttribute("font-family", "Inter, system-ui, sans-serif");
+            label.setAttribute("font-size", "14");
+            
+            // Apply text styling based on search
+            if (isDimmed) {
+              label.setAttribute("fill", "#999");
+              label.setAttribute("opacity", "0.3");
+            } else {
+              label.setAttribute("fill", "#e6e6e6");
+              label.setAttribute("opacity", "1");
+            }
+            
+            label.textContent = node.title || "";
+            group.appendChild(label);
+
+            nodesGroup.appendChild(group);
+          });
+          svg.appendChild(nodesGroup);
+        }
+
+        function addNodeAt(x, y, title) {
+          // Generate unique timestamp-based ID
+          let id = Date.now();
+          // Ensure uniqueness by checking if ID already exists
+          while (currentData.nodes.some(n => n.id === id)) {
+            id = Date.now() + Math.random();
+          }
+          currentData = {
+            nodes: [...currentData.nodes, { id, title, x, y, description: "", color: "#6a6a6a", images: [], backgroundImage: null, todos: [] }],
+            links: currentData.links
+          };
+          render();
+          saveDataToDiv();
+          updateTimeline(); // Update timeline when node is added
+          return id; // Return the new node's ID
+        }
+
+        function getSvgPoint(svg, event) {
+          const pt = svg.createSVGPoint();
+          pt.x = event.clientX;
+          pt.y = event.clientY;
+          const ctm = svg.getScreenCTM();
+          if (!ctm) return null;
+          const inv = ctm.inverse();
+          const svgP = pt.matrixTransform(inv);
+          return { x: svgP.x, y: svgP.y };
+        }
+
+        // expose API for external use
+        window.generateSemanticMap = generateSemanticMap;
+        window.addSemanticNode = addNodeAt;
+
+        // Dragging support
+        function onNodePointerDown(event) {
+          const group = event.currentTarget;
+          const idStr = group && group.getAttribute && group.getAttribute("data-id");
+          if (!idStr) return;
+          // Convert string ID to number for comparison
+          const id = Number(idStr);
+          if (isNaN(id)) return; // Invalid ID
+          
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          const p = getSvgPoint(svg, event);
+          if (!p) return;
+          
+          // Store drag start position to detect if it's a click vs drag
+          nodeDragStartPos = { x: p.x, y: p.y, nodeId: id, hasDragged: false };
+          
+          // Handle node selection
+          if (event.shiftKey) {
+            // Toggle selection with shift
+            if (selectedNodeIds.has(id)) {
+              selectedNodeIds.delete(id);
+            } else {
+              selectedNodeIds.add(id);
+            }
+            render();
+            event.stopPropagation();
+            return;
+          }
+          
+          // Check if clicking on an already selected node (start group drag)
+          if (selectedNodeIds.has(id) && selectedNodeIds.size > 1) {
+            groupDragOffset = { startX: p.x, startY: p.y, currentX: p.x, currentY: p.y };
+            render();
+            event.stopPropagation();
+            event.preventDefault();
+            return;
+          } else {
+            // Single node selection or new selection
+            if (!selectedNodeIds.has(id)) {
+              selectedNodeIds.clear();
+              selectedNodeIds.add(id);
+            }
+          }
+          
+          if (event.ctrlKey) {
+            // begin connection creation
+            startConnecting(id, event);
+          } else {
+            // Prepare for potential drag (will be confirmed on move if mouse moves enough)
+            draggingId = id;
+            group.classList.add("dragging");
+          }
+          event.stopPropagation();
+          event.preventDefault();
+        }
+
+        function onPointerMove(event) {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          // Check if we should start box selection (mouse moved after pointerdown)
+          if (potentialBoxSelectStart && !isBoxSelecting && !draggingId && !isConnecting && !isPanning) {
+            const p = getSvgPoint(svg, event);
+            if (p) {
+              const dx = Math.abs(p.x - potentialBoxSelectStart.x);
+              const dy = Math.abs(p.y - potentialBoxSelectStart.y);
+              // Start box selection if mouse moved more than 5 pixels
+              if (dx > 5 || dy > 5) {
+                // Store shift key state when box selection starts
+                boxSelectShiftKey = event.shiftKey;
+                // If shift is held, add to selection, otherwise start new selection
+                if (!event.shiftKey) {
+                  selectedNodeIds.clear();
+                }
+                isBoxSelecting = true;
+                boxSelectStart = potentialBoxSelectStart;
+                createSelectionRect(svg);
+                potentialBoxSelectStart = null;
+                event.preventDefault();
+              }
+            }
+          }
+          
+          // Handle box selection
+          if (isBoxSelecting && boxSelectStart && boxSelectRect) {
+            const p = getSvgPoint(svg, event);
+            if (!p) return;
+            
+            // Update selection rectangle
+            const minX = Math.min(boxSelectStart.x, p.x);
+            const minY = Math.min(boxSelectStart.y, p.y);
+            const maxX = Math.max(boxSelectStart.x, p.x);
+            const maxY = Math.max(boxSelectStart.y, p.y);
+            
+            boxSelectRect.setAttribute("x", String(minX));
+            boxSelectRect.setAttribute("y", String(minY));
+            boxSelectRect.setAttribute("width", String(maxX - minX));
+            boxSelectRect.setAttribute("height", String(maxY - minY));
+            
+            // Update selected nodes based on selection box
+            updateSelectedNodes({ x: minX, y: minY, width: maxX - minX, height: maxY - minY });
+            // Update visual selection in real-time - but don't clear the selection rectangle
+            const preserveRect = boxSelectRect;
+            if (preserveRect) {
+              svg.removeChild(boxSelectRect);
+            }
+            
+            // Temporarily disable box selection to preserve rect during render
+            const wasBoxSelecting = isBoxSelecting;
+            isBoxSelecting = false;
+            render();
+            isBoxSelecting = wasBoxSelecting;
+            
+            // Restore selection rectangle
+            if (preserveRect && svg && !svg.contains(preserveRect)) {
+              svg.appendChild(preserveRect);
+            }
+            boxSelectRect = preserveRect;
+            return;
+          }
+          
+          // Handle group dragging
+          if (selectedNodeIds.size > 0 && groupDragOffset && typeof groupDragOffset.startX === "number") {
+            const p = getSvgPoint(svg, event);
+            if (!p) return;
+            
+            const deltaX = p.x - groupDragOffset.currentX;
+            const deltaY = p.y - groupDragOffset.currentY;
+            
+            // Calculate new positions for all selected nodes
+            currentData = {
+              nodes: currentData.nodes.map(n => {
+                if (selectedNodeIds.has(n.id)) {
+                  const node = currentData.nodes.find(node => node.id === n.id);
+                  if (node && typeof node.x === "number" && typeof node.y === "number") {
+                    return {
+                      ...n,
+                      x: node.x + deltaX,
+                      y: node.y + deltaY
+                    };
+                  }
+                }
+                return n;
+              }),
+              links: currentData.links
+            };
+            // Update the current position for next move
+            groupDragOffset.currentX = p.x;
+            groupDragOffset.currentY = p.y;
+            render();
+            return;
+          }
+          
+          if (isConnecting && connectSourceId) {
+            // update temp line end to pointer
+            const p = getSvgPoint(svg, event);
+            if (!p || !tempLineEl) return;
+            tempLineEl.setAttribute("x2", String(p.x));
+            tempLineEl.setAttribute("y2", String(p.y));
+            return;
+          }
+          
+          if (!draggingId || !nodeDragStartPos) return;
+          const p = getSvgPoint(svg, event);
+          if (!p) return;
+          
+          // Check if this is actually a drag or just a click
+          const dx = Math.abs(p.x - nodeDragStartPos.x);
+          const dy = Math.abs(p.y - nodeDragStartPos.y);
+          
+          // Only start dragging if mouse moved more than tolerance
+          if (dx > NODE_CLICK_TOLERANCE || dy > NODE_CLICK_TOLERANCE) {
+            // This is a drag, update node position
+            currentData = {
+              nodes: currentData.nodes.map(n => n.id === draggingId ? { ...n, x: p.x, y: p.y } : n),
+              links: currentData.links
+            };
+            render();
+            // Mark that we've started dragging (so pointerup won't trigger click)
+            if (!nodeDragStartPos.hasDragged) {
+              nodeDragStartPos.hasDragged = true;
+              
+              // If dragging a single node (not multiple selected), open the fly-in panel
+              if (draggingId && selectedNodeIds.size <= 1 && (selectedNodeIds.size === 0 || selectedNodeIds.has(draggingId))) {
+                // Open fly-in panel for this node
+                openFlyInPanel(draggingId);
+              }
+            }
+          }
+        }
+
+        function onPointerUp(event) {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          // Handle box selection end
+          if (isBoxSelecting) {
+            isBoxSelecting = false;
+            boxSelectShiftKey = false;
+            if (boxSelectRect) {
+              // Remove data-cleared attribute for next box selection
+              boxSelectRect.removeAttribute("data-cleared");
+              boxSelectRect.remove();
+              boxSelectRect = null;
+            }
+            boxSelectStart = null;
+            potentialBoxSelectStart = null;
+            render(); // Re-render to show selected nodes
+            suppressNextBackgroundClick = true;
+            return;
+          }
+          
+          // Clear potential box select start if it was just a click
+          if (potentialBoxSelectStart) {
+            potentialBoxSelectStart = null;
+          }
+          
+          // Handle group drag end
+          if (selectedNodeIds.size > 0 && groupDragOffset) {
+            groupDragOffset = null;
+            saveDataToDiv();
+            suppressNextBackgroundClick = true;
+            return;
+          }
+          
+          if (isConnecting && connectSourceId) {
+            // determine target under pointer by checking distance to node centers
+            const p = getSvgPoint(svg, event);
+            if (p) {
+              const nodeRadius = 14;
+              let closestNodeId = null;
+              let minDist = Infinity;
+              
+              // Get current viewBox dimensions (same as render)
+              const viewBox = svg.viewBox.baseVal;
+              const width = viewBox.width || svg.clientWidth || 1000;
+              const height = viewBox.height || svg.clientHeight || 600;
+              const centerX = width / 2;
+              const centerY = height / 2;
+              const radius = Math.min(width, height) * 0.35;
+              const nodeCount = currentData.nodes.length || 1;
+              
+              currentData.nodes.forEach(node => {
+                // calculate node position (same logic as render)
+                const nodeIndex = currentData.nodes.findIndex(n => n.id === node.id);
+                const hasFixed = typeof node.x === "number" && typeof node.y === "number";
+                const angle = (nodeIndex / nodeCount) * Math.PI * 2;
+                const x = hasFixed ? node.x : centerX + radius * Math.cos(angle);
+                const y = hasFixed ? node.y : centerY + radius * Math.sin(angle);
+                
+                const dist = Math.sqrt((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y));
+                if (dist < nodeRadius && dist < minDist) {
+                  minDist = dist;
+                  closestNodeId = node.id;
+                }
+              });
+              
+              if (closestNodeId && closestNodeId !== connectSourceId) {
+                addLink(connectSourceId, closestNodeId);
+              }
+            }
+            // cleanup temp line (render() already cleared it, but clean up reference)
+            tempLineEl = null;
+            isConnecting = false;
+            connectSourceId = null;
+            suppressNextBackgroundClick = true;
+          }
+          if (!draggingId) return;
+          
+          // Check if this was a click (no significant movement) or a drag
+          const wasClick = nodeDragStartPos && 
+                          (!nodeDragStartPos.hasDragged) &&
+                          nodeDragStartPos.nodeId === draggingId;
+          
+          const clickedNodeId = wasClick ? draggingId : null;
+          
+          draggingId = null;
+          nodeDragStartPos = null;
+          
+          // remove dragging class from any nodes
+          const nodes = svg.querySelectorAll('g.node.dragging');
+          nodes.forEach(n => n.classList.remove('dragging'));
+          
+          // If it was a click (not a drag), open the fly-in panel
+          if (wasClick && clickedNodeId !== null) {
+            // Deselect previous selection and select only this node
+            selectedNodeIds.clear();
+            selectedNodeIds.add(clickedNodeId);
+            render();
+            openFlyInPanel(clickedNodeId);
+            suppressNextBackgroundClick = true;
+            return;
+          }
+          
+          suppressNextBackgroundClick = true;
+          // Save data after dragging ends
+          saveDataToDiv();
+        }
+
+        function createSelectionRect(svg) {
+          if (boxSelectRect) {
+            boxSelectRect.remove();
+          }
+          boxSelectRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          boxSelectRect.classList.add("selection-rect");
+          boxSelectRect.setAttribute("x", String(boxSelectStart.x));
+          boxSelectRect.setAttribute("y", String(boxSelectStart.y));
+          boxSelectRect.setAttribute("width", "0");
+          boxSelectRect.setAttribute("height", "0");
+          svg.appendChild(boxSelectRect);
+        }
+
+        function updateSelectedNodes(rect) {
+          if (!rect || !boxSelectRect) return;
+          
+          // Ensure width and height are positive
+          const normalizedRect = {
+            x: Math.min(rect.x, rect.x + rect.width),
+            y: Math.min(rect.y, rect.y + rect.height),
+            width: Math.abs(rect.width),
+            height: Math.abs(rect.height)
+          };
+          
+          // Only proceed if we have a valid rectangle area (not just a point)
+          if (normalizedRect.width <= 0 && normalizedRect.height <= 0) {
+            return;
+          }
+          
+          // Find all nodes within the selection rectangle
+          const nodesInRect = [];
+          currentData.nodes.forEach(node => {
+            if (typeof node.x === "number" && typeof node.y === "number") {
+              // Check if node center is within selection rectangle
+              // Use >= for min bounds and <= for max bounds to include edge cases
+              if (node.x >= normalizedRect.x && 
+                  node.x <= normalizedRect.x + normalizedRect.width &&
+                  node.y >= normalizedRect.y && 
+                  node.y <= normalizedRect.y + normalizedRect.height) {
+                nodesInRect.push(node.id);
+              }
+            }
+          });
+          
+          // If shift wasn't held, clear selection first (only on first call per box selection)
+          // This must happen AFTER finding nodes but BEFORE adding them
+          if (!boxSelectShiftKey && !boxSelectRect.hasAttribute("data-cleared")) {
+            selectedNodeIds.clear();
+            boxSelectRect.setAttribute("data-cleared", "true");
+          }
+          
+          // Update selection - add nodes that are in the rectangle
+          nodesInRect.forEach(id => selectedNodeIds.add(id));
+        }
+
+        function startConnecting(sourceId, event) {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          isConnecting = true;
+          connectSourceId = sourceId;
+          // find source position from rendered element (data-id is stored as string in SVG)
+          const sourceGroup = svg.querySelector(`g.node[data-id="${sourceId}"]`);
+          if (!sourceGroup) return;
+          const circle = sourceGroup.querySelector('circle');
+          if (!circle) return;
+          const startX = parseFloat(circle.getAttribute('cx') || '0');
+          const startY = parseFloat(circle.getAttribute('cy') || '0');
+          // create temp line
+          tempLineEl = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          tempLineEl.setAttribute("x1", String(startX));
+          tempLineEl.setAttribute("y1", String(startY));
+          tempLineEl.setAttribute("x2", String(startX));
+          tempLineEl.setAttribute("y2", String(startY));
+          tempLineEl.setAttribute("stroke", "#888888");
+          tempLineEl.setAttribute("stroke-width", "2");
+          tempLineEl.setAttribute("stroke-dasharray", "6 4");
+          tempLineEl.setAttribute("pointer-events", "none");
+          svg.appendChild(tempLineEl);
+        }
+
+        function addLink(sourceId, targetId) {
+          // prevent duplicates
+          const exists = currentData.links.some(l => l.source === sourceId && l.target === targetId);
+          if (exists) return;
+          currentData = {
+            nodes: currentData.nodes,
+            links: [...currentData.links, { source: sourceId, target: targetId, weight: 1 }]
+          };
+          render();
+          saveDataToDiv();
+        }
+
+        // Fly-in panel functions
+
+        function openFlyInPanel(nodeId) {
+          const panel = document.getElementById("flyInPanel");
+          const input = document.getElementById("nodeTitleInput");
+          const descriptionInput = document.getElementById("nodeDescriptionInput");
+          const titleEl = document.getElementById("flyInPanelTitle");
+          const warningEl = document.getElementById("titleDuplicateWarning");
+          if (!panel || !input) return;
+
+          creatingNodeAt = null; // Not creating, editing
+          editingNodeId = nodeId;
+          originalEditingNodeId = nodeId; // Store original for duplicate checking
+          if (titleEl) titleEl.textContent = "Edit Node";
+          const deleteBtn = document.getElementById("flyInPanelDelete");
+          
+          // Show delete button when editing existing node
+          if (deleteBtn) {
+            deleteBtn.style.display = "block";
+          }
+
+          const node = currentData.nodes.find(n => n.id === nodeId);
+          if (node) {
+            input.value = node.title || "";
+            if (descriptionInput) {
+              descriptionInput.value = node.description || "";
+              const descriptionPreview = document.getElementById("descriptionPreview");
+              
+              // Initially show preview if there's content, otherwise show input
+              if (node.description && node.description.trim()) {
+                descriptionInput.style.display = "none";
+                if (descriptionPreview) {
+                  descriptionPreview.style.display = "block";
+                  updateDescriptionPreview();
+                }
+              } else {
+                // If no content, show input
+                descriptionInput.style.display = "block";
+                if (descriptionPreview) {
+                  descriptionPreview.style.display = "none";
+                }
+              }
+            }
+            
+            // Load color
+            const colorInput = document.getElementById("nodeColorInput");
+            const colorHexInput = document.getElementById("nodeColorHexInput");
+            const nodeColor = node.color || "#6a6a6a";
+            if (colorInput) colorInput.value = nodeColor;
+            if (colorHexInput) colorHexInput.value = nodeColor.toUpperCase();
+            
+            input.classList.remove("duplicate");
+            if (warningEl) warningEl.style.display = "none";
+            updateImageThumbnails(node);
+            updateConnectedNodes(nodeId);
+            updateTodoList(node);
+            panel.classList.add("open");
+            
+            // Focus description input
+            if (descriptionInput) {
+              setTimeout(() => {
+                descriptionInput.style.display = "block";
+                const preview = document.getElementById("descriptionPreview");
+                if (preview) {
+                  preview.style.display = "none";
+                }
+                descriptionInput.focus();
+                // Set cursor at end of text
+                descriptionInput.setSelectionRange(descriptionInput.value.length, descriptionInput.value.length);
+              }, 50);
+            }
+          }
+        }
+
+        function showDeleteConfirmModal() {
+          const modal = document.getElementById("deleteConfirmModal");
+          if (modal) {
+            modal.style.display = "flex";
+          }
+        }
+
+        function hideDeleteConfirmModal() {
+          const modal = document.getElementById("deleteConfirmModal");
+          if (modal) {
+            modal.style.display = "none";
+          }
+        }
+
+        function deleteNode(nodeId) {
+          // Remove all links connected to this node
+          const filteredLinks = currentData.links.filter(
+            link => link.source !== nodeId && link.target !== nodeId
+          );
+
+          // Remove the node
+          const filteredNodes = currentData.nodes.filter(node => node.id !== nodeId);
+
+          currentData = {
+            nodes: filteredNodes,
+            links: filteredLinks
+          };
+
+          // Close fly-in panel
+          closeFlyInPanel();
+
+          // Re-render and save
+          render();
+          saveDataToDiv();
+          updateTimeline();
+        }
+
+        function openFlyInPanelForNewNode() {
+          const panel = document.getElementById("flyInPanel");
+          const input = document.getElementById("nodeTitleInput");
+          const descriptionInput = document.getElementById("nodeDescriptionInput");
+          const titleEl = document.getElementById("flyInPanelTitle");
+          const warningEl = document.getElementById("titleDuplicateWarning");
+          const deleteBtn = document.getElementById("flyInPanelDelete");
+          if (!panel || !input) return;
+
+          editingNodeId = null; // No node being edited
+          originalEditingNodeId = null;
+          if (titleEl) titleEl.textContent = "Create Node";
+          
+          // Hide delete button when creating new node
+          if (deleteBtn) {
+            deleteBtn.style.display = "none";
+          }
+
+          input.value = ""; // Empty input for new node
+          if (descriptionInput) {
+            descriptionInput.value = ""; // Empty description for new node
+            updateDescriptionPreview();
+          }
+          
+          // Set default color for new node
+          const colorInput = document.getElementById("nodeColorInput");
+          const colorHexInput = document.getElementById("nodeColorHexInput");
+          const defaultColor = "#6a6a6a";
+          if (colorInput) colorInput.value = defaultColor;
+          if (colorHexInput) colorHexInput.value = defaultColor;
+          input.classList.remove("duplicate");
+          if (warningEl) warningEl.style.display = "none";
+          updateImageThumbnails(null); // Clear thumbnails
+          updateConnectedNodes(null); // Clear connected nodes
+          updateTodoList(null); // Clear todo list
+          panel.classList.add("open");
+          input.focus();
+        }
+
+        function closeFlyInPanel() {
+          const panel = document.getElementById("flyInPanel");
+          const input = document.getElementById("nodeTitleInput");
+          const descriptionInput = document.getElementById("nodeDescriptionInput");
+          const warningEl = document.getElementById("titleDuplicateWarning");
+          if (panel) {
+            panel.classList.remove("open");
+          }
+          if (input) {
+            input.classList.remove("duplicate");
+            input.value = "";
+          }
+          if (descriptionInput) {
+            descriptionInput.value = "";
+            updateDescriptionPreview();
+          }
+          
+          // Reset color inputs
+          const colorInput = document.getElementById("nodeColorInput");
+          const colorHexInput = document.getElementById("nodeColorHexInput");
+          if (colorInput) colorInput.value = "#6a6a6a";
+          if (colorHexInput) colorHexInput.value = "#6a6a6a";
+          
+          if (warningEl) {
+            warningEl.style.display = "none";
+          }
+          editingNodeId = null;
+          originalEditingNodeId = null;
+          creatingNodeAt = null; // Clear creation position
+          updateImageThumbnails(null); // Clear thumbnails
+        }
+
+        function handleImageFiles(files) {
+          if (!editingNodeId || files.length === 0) return;
+          
+          const node = currentData.nodes.find(n => n.id === editingNodeId);
+          if (!node) return;
+          
+          // Initialize images array if needed
+          if (!Array.isArray(node.images)) {
+            node.images = [];
+          }
+          
+          let processed = 0;
+          files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const base64 = e.target.result;
+              node.images.push(base64);
+              processed++;
+              if (processed === files.length) {
+                currentData = {
+                  nodes: currentData.nodes.map(n => n.id === editingNodeId ? node : n),
+                  links: currentData.links
+                };
+                updateImageThumbnails(node);
+                render();
+                saveDataToDiv();
+              }
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        function updateImageThumbnails(node) {
+          const thumbnailsContainer = document.getElementById("imageThumbnails");
+          const clearBackgroundBtn = document.getElementById("clearBackgroundBtn");
+          
+          if (!thumbnailsContainer) return;
+          
+          thumbnailsContainer.innerHTML = "";
+          
+          // Show/hide clear background button
+          if (clearBackgroundBtn) {
+            if (node && node.backgroundImage) {
+              clearBackgroundBtn.style.display = "block";
+            } else {
+              clearBackgroundBtn.style.display = "none";
+            }
+          }
+          
+          if (!node || !node.images || node.images.length === 0) return;
+          
+          node.images.forEach((imageData, index) => {
+            const thumbnail = document.createElement("div");
+            thumbnail.className = "image-thumbnail";
+            thumbnail.setAttribute("data-index", index);
+            if (node.backgroundImage === imageData) {
+              thumbnail.classList.add("active");
+            }
+            
+            const img = document.createElement("img");
+            img.src = imageData;
+            img.alt = "Thumbnail " + (index + 1);
+            thumbnail.appendChild(img);
+            
+            // Add click handler to open image in modal
+            thumbnail.addEventListener("click", (e) => {
+              e.stopPropagation(); // Prevent event bubbling
+              openImageModal(node.id, index);
+            });
+            
+            thumbnailsContainer.appendChild(thumbnail);
+          });
+        }
+
+        function openImageModal(nodeId, imageIndex) {
+          const modal = document.getElementById("imageModal");
+          const modalImg = document.getElementById("imageModalImg");
+          if (!modal || !modalImg) return;
+          
+          const node = currentData.nodes.find(n => n.id === nodeId);
+          if (!node || !node.images || node.images.length === 0) return;
+          
+          if (imageIndex < 0 || imageIndex >= node.images.length) return;
+          
+          // Store modal context
+          modalNodeId = nodeId;
+          modalImageIndex = imageIndex;
+          
+          // Display the image
+          modalImg.src = node.images[imageIndex];
+          modal.style.display = "flex";
+        }
+
+        function navigateModalImage(direction) {
+          if (modalNodeId === null || modalImageIndex === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === modalNodeId);
+          if (!node || !node.images || node.images.length === 0) return;
+          
+          const totalImages = node.images.length;
+          let newIndex;
+          
+          if (direction === "next") {
+            // Right arrow = next image (move right in array)
+            newIndex = (modalImageIndex + 1) % totalImages; // Circular: wraps to 0 (first) at end
+          } else if (direction === "prev") {
+            // Left arrow = previous image (move left in array)
+            newIndex = (modalImageIndex - 1 + totalImages) % totalImages; // Circular: wraps to last at start
+          } else {
+            return;
+          }
+          
+          modalImageIndex = newIndex;
+          const modalImg = document.getElementById("imageModalImg");
+          if (modalImg) {
+            modalImg.src = node.images[modalImageIndex];
+          }
+        }
+
+        function closeImageModal() {
+          const modal = document.getElementById("imageModal");
+          if (modal) {
+            modal.style.display = "none";
+            modalImageIndex = null;
+            modalNodeId = null;
+          }
+        }
+
+        function updateConnectedNodes(nodeId) {
+          const connectedNodesContainer = document.getElementById("connectedNodes");
+          if (!connectedNodesContainer) return;
+          
+          connectedNodesContainer.innerHTML = "";
+          
+          if (!nodeId) {
+            connectedNodesContainer.innerHTML = '<div class="connected-nodes-empty">No connections</div>';
+            return;
+          }
+          
+          // Find all links where this node is either source or target
+          const connectedNodeIds = new Set();
+          currentData.links.forEach(link => {
+            if (link.source === nodeId) {
+              connectedNodeIds.add(link.target);
+            } else if (link.target === nodeId) {
+              connectedNodeIds.add(link.source);
+            }
+          });
+          
+          if (connectedNodeIds.size === 0) {
+            connectedNodesContainer.innerHTML = '<div class="connected-nodes-empty">No connections</div>';
+            return;
+          }
+          
+          // Create links for each connected node
+          connectedNodeIds.forEach(connectedNodeId => {
+            const connectedNode = currentData.nodes.find(n => n.id === connectedNodeId);
+            if (!connectedNode) return;
+            
+            const linkElement = document.createElement("div");
+            linkElement.className = "connected-node-link";
+            linkElement.textContent = connectedNode.title || "Untitled";
+            linkElement.title = connectedNode.title || "Untitled";
+            
+            // Click handler: zoom to node and open fly-in panel
+            linkElement.addEventListener("click", () => {
+              zoomToNode(connectedNodeId);
+              openFlyInPanel(connectedNodeId);
+            });
+            
+            connectedNodesContainer.appendChild(linkElement);
+          });
+        }
+
+        function updateTodoList(node) {
+          const todoContainer = document.getElementById("todoContainer");
+          if (!todoContainer) return;
+          
+          todoContainer.innerHTML = "";
+          
+          if (!node) {
+            return;
+          }
+          
+          // Ensure todos array exists
+          if (!node.todos) {
+            node.todos = [];
+          }
+          
+          // Render each todo item
+          node.todos.forEach((todo, index) => {
+            const todoItem = document.createElement("div");
+            todoItem.className = `todo-item ${todo.checked ? 'checked' : ''}`;
+            
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.className = "todo-item-checkbox";
+            checkbox.checked = todo.checked || false;
+            checkbox.addEventListener("change", () => {
+              toggleTodoItem(editingNodeId, index);
+            });
+            
+            const textInput = document.createElement("input");
+            textInput.type = "text";
+            textInput.className = "todo-item-text";
+            textInput.value = todo.text || "";
+            textInput.placeholder = "Enter todo item...";
+            textInput.disabled = todo.checked || false;
+            textInput.addEventListener("mousedown", (e) => {
+              e.stopPropagation();
+            });
+            textInput.addEventListener("input", () => {
+              updateTodoItemText(editingNodeId, index, textInput.value);
+            });
+            textInput.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                // Add new item after this one
+                addTodoItem(editingNodeId, index + 1);
+              }
+            });
+            
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "todo-item-delete";
+            deleteBtn.textContent = "×";
+            deleteBtn.addEventListener("click", () => {
+              deleteTodoItem(editingNodeId, index);
+            });
+            
+            todoItem.appendChild(checkbox);
+            todoItem.appendChild(textInput);
+            todoItem.appendChild(deleteBtn);
+            todoContainer.appendChild(todoItem);
+          });
+        }
+
+        function addTodoItem(nodeId, insertIndex = null) {
+          if (nodeId === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === nodeId);
+          if (!node) return;
+          
+          // Ensure todos array exists
+          if (!node.todos) {
+            node.todos = [];
+          }
+          
+          const newTodo = { text: "", checked: false };
+          
+          if (insertIndex === null || insertIndex === undefined) {
+            // Add to end
+            node.todos.push(newTodo);
+            insertIndex = node.todos.length - 1;
+          } else {
+            // Insert at specific index
+            node.todos.splice(insertIndex, 0, newTodo);
+          }
+          
+          // Update data
+          currentData = {
+            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
+            links: currentData.links
+          };
+          
+          // Update display
+          updateTodoList(node);
+          saveDataToDiv();
+          
+          // Focus the new todo item's text input
+          setTimeout(() => {
+            const todoContainer = document.getElementById("todoContainer");
+            if (todoContainer) {
+              const todoItems = todoContainer.querySelectorAll(".todo-item-text");
+              if (todoItems[insertIndex]) {
+                todoItems[insertIndex].focus();
+                todoItems[insertIndex].select();
+              }
+            }
+          }, 50);
+        }
+
+        function deleteTodoItem(nodeId, index) {
+          if (nodeId === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === nodeId);
+          if (!node || !node.todos) return;
+          
+          node.todos.splice(index, 1);
+          
+          // Update data
+          currentData = {
+            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
+            links: currentData.links
+          };
+          
+          // Update display
+          updateTodoList(node);
+          saveDataToDiv();
+        }
+
+        function toggleTodoItem(nodeId, index) {
+          if (nodeId === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === nodeId);
+          if (!node || !node.todos || !node.todos[index]) return;
+          
+          node.todos[index].checked = !node.todos[index].checked;
+          
+          // Update data
+          currentData = {
+            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
+            links: currentData.links
+          };
+          
+          // Update display
+          updateTodoList(node);
+          saveDataToDiv();
+        }
+
+        function updateTodoItemText(nodeId, index, text) {
+          if (nodeId === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === nodeId);
+          if (!node || !node.todos || !node.todos[index]) return;
+          
+          node.todos[index].text = text;
+          
+          // Update data (but don't re-render display on every keystroke)
+          currentData = {
+            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
+            links: currentData.links
+          };
+          
+          // Save but don't update display (already in sync)
+          saveDataToDiv();
+        }
+
+        function deleteImage(imageIndex) {
+          if (editingNodeId === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === editingNodeId);
+          if (!node || !node.images || imageIndex < 0 || imageIndex >= node.images.length) return;
+          
+          const imageToDelete = node.images[imageIndex];
+          
+          // Remove the image from the array
+          node.images.splice(imageIndex, 1);
+          
+          // If this image was the background image, clear it
+          if (node.backgroundImage === imageToDelete) {
+            node.backgroundImage = null;
+          }
+          
+          // Update thumbnails
+          updateImageThumbnails(node);
+          
+          // Save and re-render
+          render();
+          saveDataToDiv();
+        }
+
+        function setNodeBackgroundImage(imageIndex) {
+          if (editingNodeId === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === editingNodeId);
+          if (!node || !node.images || !node.images[imageIndex]) return;
+          
+          const imageData = node.images[imageIndex];
+          node.backgroundImage = imageData;
+          
+          currentData = {
+            nodes: currentData.nodes.map(n => n.id === editingNodeId ? node : n),
+            links: currentData.links
+          };
+          
+          updateImageThumbnails(node);
+          render();
+          saveDataToDiv();
+        }
+
+        function clearNodeBackgroundImage() {
+          if (editingNodeId === null) return;
+          
+          const node = currentData.nodes.find(n => n.id === editingNodeId);
+          if (!node) return;
+          
+          node.backgroundImage = null;
+          
+          currentData = {
+            nodes: currentData.nodes.map(n => n.id === editingNodeId ? node : n),
+            links: currentData.links
+          };
+          
+          updateImageThumbnails(node);
+          render();
+          saveDataToDiv();
+        }
+
+        function updateNodeTitleOnInput(event) {
+          const input = event.target;
+          if (!input) return;
+
+          const newTitle = input.value.trim();
+          const warningEl = document.getElementById("titleDuplicateWarning");
+          
+          // Check for duplicate titles
+          let hasDuplicate = false;
+          
+          if (creatingNodeAt) {
+            // Check for duplicate when creating new node
+            hasDuplicate = newTitle && currentData.nodes.some(n => (n.title || "").toLowerCase() === newTitle.toLowerCase());
+          } else if (editingNodeId) {
+            // Check for duplicate when editing (excluding current node)
+            hasDuplicate = newTitle && currentData.nodes.some(n => 
+              n.id !== editingNodeId && 
+              (n.title || "").toLowerCase() === newTitle.toLowerCase()
+            );
+          }
+          
+          // Show/hide warning and update input styling
+          if (warningEl) {
+            if (hasDuplicate) {
+              warningEl.style.display = "block";
+              input.classList.add("duplicate");
+            } else {
+              warningEl.style.display = "none";
+              input.classList.remove("duplicate");
+            }
+          }
+          
+          // Handle new node creation
+          if (creatingNodeAt) {
+            // Don't create if empty
+            if (!newTitle) {
+              return;
+            }
+
+            // Don't create if duplicate
+            if (hasDuplicate) {
+              return;
+            }
+
+            // Get description if it was entered
+            const descriptionInput = document.getElementById("nodeDescriptionInput");
+            const description = descriptionInput ? descriptionInput.value : "";
+            
+            // Create new node at stored position
+            const newNodeId = addNodeAt(creatingNodeAt.x, creatingNodeAt.y, newTitle);
+            
+            // Update description if provided
+            if (description && newNodeId) {
+              const newNode = currentData.nodes.find(n => n.id === newNodeId);
+              if (newNode) {
+                currentData = {
+                  nodes: currentData.nodes.map(n => 
+                    n.id === newNodeId ? { ...n, description: description } : n
+                  ),
+                  links: currentData.links
+                };
+                saveDataToDiv();
+              }
+            }
+            
+            // Switch to edit mode for the newly created node and load its data
+            editingNodeId = newNodeId;
+            originalEditingNodeId = newNodeId;
+            const newNode = currentData.nodes.find(n => n.id === newNodeId);
+            if (newNode) {
+              updateImageThumbnails(newNode);
+            }
+            creatingNodeAt = null; // Clear creation flag
+            return;
+          }
+
+          // Handle existing node editing
+          if (!editingNodeId) return;
+
+          // Get the node being edited
+          const node = currentData.nodes.find(n => n.id === editingNodeId);
+          if (!node) return;
+
+          // Don't update if empty
+          if (!newTitle) {
+            return;
+          }
+
+          // Don't update if duplicate
+          if (hasDuplicate) {
+            return;
+          }
+
+            // Update node title (ID stays the same)
+            const currentTitle = (node.title || "").toLowerCase();
+            if (currentTitle !== newTitle.toLowerCase()) {
+              currentData = {
+                nodes: currentData.nodes.map(n => 
+                  n.id === editingNodeId ? { ...n, title: newTitle } : n
+                ),
+                links: currentData.links // Links reference IDs, not titles, so no change needed
+              };
+
+              render();
+              saveDataToDiv();
+              updateTimeline(); // Update timeline when title changes
+            }
+        }
+
+        function saveNodeTitle() {
+          const input = document.getElementById("nodeTitleInput");
+          if (!input || !editingNodeId) return;
+
+          const newTitle = input.value.trim();
+          if (!newTitle) {
+            window.alert("Title cannot be empty.");
+            return;
+          }
+
+          // Check for duplicate titles (excluding current node, case-insensitive)
+          const hasDuplicate = currentData.nodes.some(n => 
+            n.id !== editingNodeId && 
+            (n.title || "").toLowerCase() === newTitle.toLowerCase()
+          );
+          if (hasDuplicate) {
+            window.alert("A node with this title already exists.");
+            return;
+          }
+
+          // Update node title (ID stays the same)
+          currentData = {
+            nodes: currentData.nodes.map(n => 
+              n.id === editingNodeId ? { ...n, title: newTitle } : n
+            ),
+            links: currentData.links // Links reference IDs, not titles
+          };
+
+          render();
+          saveDataToDiv();
+          closeFlyInPanel();
+        }
+
+        function convertUrlsToLinks(text) {
+          // URL regex pattern - matches http://, https://, www., and common TLDs
+          const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.[a-zA-Z]{2,}[^\s]*)/g;
+          
+          const parts = [];
+          let lastIndex = 0;
+          let match;
+          
+          while ((match = urlRegex.exec(text)) !== null) {
+            // Add text before the URL
+            if (match.index > lastIndex) {
+              parts.push(document.createTextNode(text.substring(lastIndex, match.index)));
+            }
+            
+            // Extract the matched URL
+            let url = match[0];
+            
+            // Add protocol if missing
+            if (!url.match(/^https?:\/\//i)) {
+              url = 'https://' + url;
+            }
+            
+            // Create clickable link
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = match[0];
+            link.title = url;
+            parts.push(link);
+            
+            lastIndex = match.index + match[0].length;
+          }
+          
+          // Add remaining text
+          if (lastIndex < text.length) {
+            parts.push(document.createTextNode(text.substring(lastIndex)));
+          }
+          
+          // If no URLs found, return the original text as a text node
+          if (parts.length === 0) {
+            parts.push(document.createTextNode(text));
+          }
+          
+          return parts;
+        }
+
+        function updateDescriptionPreview() {
+          const textarea = document.getElementById("nodeDescriptionInput");
+          const preview = document.getElementById("descriptionPreview");
+          
+          if (!textarea || !preview) return;
+          
+          const text = textarea.value;
+          
+          // Only update preview if textarea is not focused
+          if (document.activeElement !== textarea) {
+            if (!text.trim()) {
+              preview.innerHTML = '';
+              preview.style.display = 'none';
+              textarea.style.display = 'block'; // Show input if no content
+              return;
+            }
+            
+            preview.style.display = 'block';
+            preview.innerHTML = '';
+            
+            // Convert URLs to links
+            const parts = convertUrlsToLinks(text);
+            parts.forEach(part => preview.appendChild(part));
+          }
+        }
+
+        function updateNodeColor(color) {
+          if (!editingNodeId) return;
+
+          const node = currentData.nodes.find(n => n.id === editingNodeId);
+          if (!node) return;
+
+          // Validate color (should be hex format)
+          if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color)) {
+            return; // Invalid color, don't update
+          }
+
+          // Update node color
+          currentData = {
+            nodes: currentData.nodes.map(n => 
+              n.id === editingNodeId ? { ...n, color: color } : n
+            ),
+            links: currentData.links
+          };
+
+          render();
+          saveDataToDiv();
+        }
+
+        function updateNodeDescriptionOnInput(event) {
+          const textarea = event.target;
+          if (!textarea) return;
+
+          const newDescription = textarea.value;
+          
+          // Update preview with clickable links
+          updateDescriptionPreview();
+
+          // Handle new node creation - description is saved when node is created
+          if (creatingNodeAt) {
+            // Description will be saved when the node is created via title input
+            return;
+          }
+
+          // Handle existing node editing
+          if (!editingNodeId) return;
+
+          // Get the node being edited
+          const node = currentData.nodes.find(n => n.id === editingNodeId);
+          if (!node) return;
+
+          // Update node description
+          currentData = {
+            nodes: currentData.nodes.map(n => 
+              n.id === editingNodeId ? { ...n, description: newDescription } : n
+            ),
+            links: currentData.links
+          };
+
+          render();
+          saveDataToDiv();
+        }
+
+        // Panning functions
+        function onMouseDown(event) {
+          // Only handle middle mouse button (button === 1)
+          if (event.button !== 1) return;
+          
+          // Don't pan if we're dragging a node or connecting
+          if (draggingId || isConnecting) return;
+          
+          event.preventDefault();
+          isPanning = true;
+          panStartX = event.clientX;
+          panStartY = event.clientY;
+          
+          // Get current viewBox position
+          const svg = document.getElementById("semanticMap");
+          if (svg) {
+            svg.classList.add("panning");
+            const vb = svg.viewBox.baseVal;
+            viewBoxX = vb.x;
+            viewBoxY = vb.y;
+          }
+        }
+
+        function onMouseMove(event) {
+          if (!isPanning) return;
+          
+          event.preventDefault();
+          
+          const deltaX = panStartX - event.clientX;
+          const deltaY = panStartY - event.clientY;
+          
+          // Update viewBox position (inverse direction for natural panning)
+          const newX = viewBoxX + deltaX;
+          const newY = viewBoxY + deltaY;
+          
+          updateViewBox(newX, newY);
+          
+          // Update start position for next move
+          panStartX = event.clientX;
+          panStartY = event.clientY;
+          viewBoxX = newX;
+          viewBoxY = newY;
+        }
+
+        function onMouseUp(event) {
+          if (!isPanning) return;
+          
+          // Only stop panning on middle mouse button up or any button if we were panning
+          if (event.button === 1 || event.button === undefined) {
+            isPanning = false;
+            const svg = document.getElementById("semanticMap");
+            if (svg) {
+              svg.classList.remove("panning");
+            }
+          }
+        }
+
+        function onWheel(event) {
+          // Don't zoom if dragging or connecting
+          if (draggingId || isConnecting || isPanning) return;
+          
+          event.preventDefault();
+          
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          // Get mouse position in screen coordinates
+          const rect = svg.getBoundingClientRect();
+          const mouseX = event.clientX - rect.left;
+          const mouseY = event.clientY - rect.top;
+          
+          // Get current viewBox
+          const vb = svg.viewBox.baseVal;
+          const currentViewBoxX = vb.x;
+          const currentViewBoxY = vb.y;
+          const currentViewBoxWidth = vb.width;
+          const currentViewBoxHeight = vb.height;
+          
+          // Calculate mouse position in viewBox coordinates
+          const mouseInViewBoxX = currentViewBoxX + (mouseX / rect.width) * currentViewBoxWidth;
+          const mouseInViewBoxY = currentViewBoxY + (mouseY / rect.height) * currentViewBoxHeight;
+          
+          // Calculate zoom factor (scroll up = zoom out, scroll down = zoom in)
+          const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+          const newZoom = zoomScale * zoomFactor;
+          
+          // Limit zoom range
+          const clampedZoom = Math.max(0.1, Math.min(10, newZoom));
+          
+          if (clampedZoom === zoomScale) return; // No change
+          
+          // Calculate new viewBox dimensions
+          const newViewBoxWidth = rect.width / clampedZoom;
+          const newViewBoxHeight = rect.height / clampedZoom;
+          
+          // Adjust viewBox position to zoom around mouse cursor
+          const zoomRatio = clampedZoom / zoomScale;
+          const newViewBoxX = mouseInViewBoxX - (mouseX / rect.width) * newViewBoxWidth;
+          const newViewBoxY = mouseInViewBoxY - (mouseY / rect.height) * newViewBoxHeight;
+          
+          // Update zoom and viewBox
+          zoomScale = clampedZoom;
+          viewBoxX = newViewBoxX;
+          viewBoxY = newViewBoxY;
+          
+          updateViewBox(newViewBoxX, newViewBoxY, clampedZoom);
+        }
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", initializeApp, { once: true });
+        } else {
+          initializeApp();
+        }
+      })();
+    </script>
+  </body>
+</html>
+
