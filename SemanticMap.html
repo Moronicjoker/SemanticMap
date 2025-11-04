@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Semantic Map 2025</title>
+    <title>Semantic Map</title>
     <meta name="description" content="Vanilla JS app scaffold for Semantic Map 2025" />
     <style>
       :root {
@@ -1927,19 +1927,29 @@
           });
 
           const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          edgesGroup.setAttribute("stroke", "#505050");
-          edgesGroup.setAttribute("stroke-width", "1");
           edgesGroup.setAttribute("fill", "none");
 
           (currentData.links || []).forEach(link => {
             const a = idToPosition.get(link.source);
             const b = idToPosition.get(link.target);
             if (!a || !b) return;
+            
+            // Find source and target nodes
+            const sourceNode = currentData.nodes.find(n => n.id === link.source);
+            const targetNode = currentData.nodes.find(n => n.id === link.target);
+            
+            // Determine line color: use node color if both nodes have the same color, otherwise default gray
+            let lineColor = "#505050"; // default gray
+            if (sourceNode && targetNode && sourceNode.color && targetNode.color && sourceNode.color === targetNode.color) {
+              lineColor = sourceNode.color;
+            }
+            
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", String(a.x));
             line.setAttribute("y1", String(a.y));
             line.setAttribute("x2", String(b.x));
             line.setAttribute("y2", String(b.y));
+            line.setAttribute("stroke", lineColor);
             line.setAttribute("stroke-width", "1");
             edgesGroup.appendChild(line);
           });
@@ -2065,7 +2075,7 @@
                 indicator.setAttribute("cy", String(p.y - 10));
                 indicator.setAttribute("r", "5");
                 indicator.setAttribute("fill", "#ff3333");
-                indicator.setAttribute("stroke", "#000000");
+                indicator.setAttribute("stroke", "#101010ff");
                 indicator.setAttribute("stroke-width", "1.5");
                 circleGroup.appendChild(indicator);
               }
@@ -2644,20 +2654,6 @@
             updateConnectedNodes(nodeId);
             updateTodoList(node);
             panel.classList.add("open");
-            
-            // Focus description input
-            if (descriptionInput) {
-              setTimeout(() => {
-                descriptionInput.style.display = "block";
-                const preview = document.getElementById("descriptionPreview");
-                if (preview) {
-                  preview.style.display = "none";
-                }
-                descriptionInput.focus();
-                // Set cursor at end of text
-                descriptionInput.setSelectionRange(descriptionInput.value.length, descriptionInput.value.length);
-              }, 50);
-            }
           }
         }
 
@@ -3126,6 +3122,7 @@
           // Update display
           updateTodoList(node);
           saveDataToDiv();
+          render(); // Re-render to update unchecked task indicator
         }
 
         function toggleTodoItem(nodeId, index) {
@@ -3658,4 +3655,3 @@
     </script>
   </body>
 </html>
-

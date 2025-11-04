@@ -134,9 +134,9 @@ DATA MANAGEMENT
    - Graceful migration on load
 
 4. TIMELINE
-   - Chronological list of all nodes by creation date
+   - Chronological list of all nodes by creation date (oldest first)
    - Displays date (short month, day)
-   - Displays time (24-hour format)
+   - Displays time (24-hour format, HH:MM)
    - Click to zoom and open node editor
 
 
@@ -150,10 +150,12 @@ FLY-IN PANEL (NODE EDITOR)
    - "Create Node" or "Edit Node" header
 
 2. DESCRIPTION EDITOR
-   - Textarea input with preview mode
-   - Automatic URL detection and linking
-   - Click URLs to open in new tab
-   - Switch between edit and preview modes
+   - Textarea input with automatic preview mode
+   - Automatic URL detection and linking in preview
+   - Click URLs in preview to open in new tab
+   - Auto-switches to preview on blur, edit mode on focus
+   - Click preview to return to edit mode
+   - Initially shows preview if content exists, otherwise shows textarea
 
 3. COLOR SELECTOR
    - Color picker (visual)
@@ -178,7 +180,7 @@ FLY-IN PANEL (NODE EDITOR)
    - Checkbox to mark complete/incomplete
    - Text input (disabled when checked)
    - Delete button (× symbol, appears on hover)
-   - Timestamp display below each todo (24-hour format)
+   - Timestamp display below each todo (short month, day, year, HH:MM in 24-hour format)
    - Timestamp updates on text change or check/uncheck
    - Enter key creates new todo after current
 
@@ -251,9 +253,9 @@ TIMELINE BAR
 2. TIMELINE ENTRIES
    - One entry per node (sorted by creation date, oldest first)
    - Display format:
-     * Date (short month, day, year)
-     * Time (24-hour format, HH:MM)
-     * Title (or "Untitled")
+     * Date (short month, day) - 10px font size
+     * Time (24-hour format, HH:MM) - 9px font size
+     * Title (or "Untitled") - 12px font size
    - Hover effect for visibility
    - Click to zoom/pan to node and open editor
 
@@ -279,7 +281,7 @@ UI/UX REQUIREMENTS
    - Font family: Inter, system-ui, sans-serif
    - Node labels: 14px
    - UI elements: 14px standard
-   - Timestamps: 10px (todos), gray color
+   - Timestamps: 10px (todos and timeline entries), gray color
 
 3. FEEDBACK & STATES
    - Hover effects on interactive elements
