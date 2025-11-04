@@ -3091,6 +3091,7 @@
           // Update display
           updateTodoList(node);
           saveDataToDiv();
+          render(); // Re-render to update unchecked task indicator
           
           // Focus the new todo item's text input
           setTimeout(() => {
