@@ -91,8 +91,8 @@
 
       g.node { cursor: grab; }
       g.node.dragging { cursor: grabbing; }
-      g.node.selected circle {
-        stroke: #4f8cff !important;
+      g.node.selected circle:not(.task-indicator) {
+        stroke: #ffffff !important;
         stroke-width: 3 !important;
         stroke-dasharray: 5, 3;
       }
@@ -241,7 +241,7 @@
         background: transparent;
         border: 1px solid #404040;
         color: var(--text);
-        border-radius: 6px;
+        border-radius: 3px;
         padding: 6px 12px;
         cursor: pointer;
         font-size: 18px;
@@ -319,6 +319,32 @@
       .color-input-wrapper input[type="text"]:focus {
         outline: none;
         border-color: var(--primary);
+      }
+
+      .color-swatches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 8px;
+        background: #1e1e1e;
+        border-radius: 3px;
+        min-height: 32px;
+      }
+
+      .color-swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 3px;
+        cursor: pointer;
+        border: 2px solid #404040;
+        transition: all 0.2s;
+        box-sizing: border-box;
+      }
+
+      .color-swatch:hover {
+        transform: scale(1.15);
+        border-color: #ffffff;
       }
 
       .description-preview {
@@ -420,9 +446,16 @@
         margin-top: 10px;
       }
 
-      .todo-item-text {
+      .todo-item-content {
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
         min-width: 0;
+      }
+
+      .todo-item-text {
+        width: 100%;
         padding: 2px 4px;
         margin: 0;
         background: transparent;
@@ -432,6 +465,12 @@
         font-size: 14px;
         font-family: inherit;
         cursor: text;
+      }
+
+      .todo-item-timestamp {
+        font-size: 10px;
+        color: #808080;
+        padding-left: 4px;
       }
 
       .todo-item-text:focus {
@@ -636,17 +675,48 @@
         border-radius: 8px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
         display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-direction: column;
         overflow: hidden;
         cursor: default;
       }
 
       .image-modal-content img {
+        flex: 1;
         width: 100%;
-        height: 100%;
+        min-height: 0;
         object-fit: contain;
         object-position: center;
+      }
+
+      .image-comment-container {
+        flex-shrink: 0;
+        padding: 16px;
+        background: var(--surface);
+        border-top: 1px solid #404040;
+      }
+
+      #imageCommentInput {
+        width: 100%;
+        padding: 12px;
+        background: #1e1e1e;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        color: #e6e6e6;
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 14px;
+        resize: vertical;
+        min-height: 60px;
+        box-sizing: border-box;
+      }
+
+      #imageCommentInput:focus {
+        outline: none;
+        border-color: #606060;
+        background: #252525;
+      }
+
+      #imageCommentInput::placeholder {
+        color: #808080;
       }
 
       .image-context-menu {
@@ -899,6 +969,7 @@
               <input type="color" id="nodeColorInput" value="#6a6a6a" />
               <input type="text" id="nodeColorHexInput" placeholder="#6a6a6a" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" />
             </div>
+            <div id="colorSwatches" class="color-swatches"></div>
           </div>
         </div>
       
@@ -913,6 +984,9 @@
       <div id="imageModal" class="image-modal-overlay" style="display: none;">
         <div class="image-modal-content">
           <img id="imageModalImg" src="" alt="Preview" />
+          <div class="image-comment-container">
+            <textarea id="imageCommentInput" placeholder="Add a comment..." rows="3"></textarea>
+          </div>
         </div>
       </div>
 
@@ -953,6 +1027,9 @@
         let viewBoxX = 0;
         let viewBoxY = 0;
         let zoomScale = 1.0;
+        let customColors = new Set(); // Track custom colors used in nodes
+        let isCopyDragging = false; // Track if ALT+drag is creating a copy
+        let copySourceNodeId = null; // Original node being copied
         let searchQuery = "";
         let selectedImageIndex = null;
         let modalImageIndex = null; // Current image index displayed in modal
@@ -1364,6 +1441,10 @@
           const imageModal = document.getElementById("imageModal");
           if (imageModal) {
             imageModal.addEventListener("click", (e) => {
+              // Don't close if clicking on the comment input or its container
+              if (e.target.id === "imageCommentInput" || e.target.closest(".image-comment-container")) {
+                return;
+              }
               // Close when clicking anywhere (overlay, content, or image)
               closeImageModal();
             });
@@ -1372,6 +1453,16 @@
             document.addEventListener("keydown", (e) => {
               // Only handle keys when modal is open
               if (imageModal.style.display === "none" || imageModal.style.display === "") {
+                return;
+              }
+              
+              // Don't handle navigation keys if user is typing in the comment input
+              const commentInput = document.getElementById("imageCommentInput");
+              if (document.activeElement === commentInput) {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  closeImageModal(); // Escape key closes the modal even when typing
+                }
                 return;
               }
               
@@ -1385,6 +1476,34 @@
                 e.preventDefault();
                 closeImageModal(); // Escape key closes the modal
               }
+            });
+          }
+          
+          // Image comment input handler
+          const imageCommentInput = document.getElementById("imageCommentInput");
+          if (imageCommentInput) {
+            imageCommentInput.addEventListener("input", (e) => {
+              if (modalNodeId === null || modalImageIndex === null) return;
+              
+              const node = currentData.nodes.find(n => n.id === modalNodeId);
+              if (!node || !node.images || modalImageIndex >= node.images.length) return;
+              
+              const comment = e.target.value;
+              const currentImageData = node.images[modalImageIndex];
+              
+              // Convert to object format if still a string
+              if (typeof currentImageData === 'string') {
+                node.images[modalImageIndex] = { data: currentImageData, comment: comment };
+              } else {
+                node.images[modalImageIndex].comment = comment;
+              }
+              
+              // Save changes
+              currentData = {
+                nodes: currentData.nodes.map(n => n.id === modalNodeId ? node : n),
+                links: currentData.links
+              };
+              saveDataToDiv();
             });
           }
 
@@ -1447,8 +1566,13 @@
 
             // Click handler to zoom and pan to node, and open fly-in panel
             entry.addEventListener("click", () => {
+              // Select the node
+              selectedNodeIds.clear();
+              selectedNodeIds.add(node.id);
+              
               zoomToNode(node.id);
               openFlyInPanel(node.id);
+              render(); // Re-render to show selection
             });
 
             container.appendChild(entry);
@@ -1747,6 +1871,16 @@
             nodes: migratedNodes,
             links: Array.isArray(data.links) ? [...data.links] : []
           };
+          
+          // Initialize custom colors from existing nodes
+          customColors.clear();
+          migratedNodes.forEach(node => {
+            if (node.color && node.color.toLowerCase() !== "#6a6a6a") {
+              customColors.add(node.color.toLowerCase());
+            }
+          });
+          updateColorSwatches();
+          
           render();
           saveDataToDiv();
           updateTimeline(); // Update timeline on load
@@ -1920,6 +2054,23 @@
             }
             
             circleGroup.appendChild(circle);
+            
+            // Add red indicator for unchecked tasks
+            if (node.todos && node.todos.length > 0) {
+              const hasUncheckedTasks = node.todos.some(todo => !todo.checked);
+              if (hasUncheckedTasks) {
+                const indicator = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                indicator.classList.add("task-indicator");
+                indicator.setAttribute("cx", String(p.x + 10));
+                indicator.setAttribute("cy", String(p.y - 10));
+                indicator.setAttribute("r", "5");
+                indicator.setAttribute("fill", "#ff3333");
+                indicator.setAttribute("stroke", "#000000");
+                indicator.setAttribute("stroke-width", "1.5");
+                circleGroup.appendChild(indicator);
+              }
+            }
+            
             group.appendChild(circleGroup);
 
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -2027,6 +2178,48 @@
           if (event.ctrlKey) {
             // begin connection creation
             startConnecting(id, event);
+          } else if (event.altKey) {
+            // ALT+drag: Create a copy of the node
+            const originalNode = currentData.nodes.find(n => n.id === id);
+            if (originalNode) {
+              // Generate unique ID for the copy
+              let newId = Date.now();
+              while (currentData.nodes.some(n => n.id === newId)) {
+                newId = Date.now() + Math.random();
+              }
+              
+              // Create a copy of the node at the same position
+              const copiedNode = {
+                ...originalNode,
+                id: newId,
+                title: (originalNode.title || "") + " (COPY)",
+                x: originalNode.x || p.x,
+                y: originalNode.y || p.y,
+                // Deep copy arrays to avoid shared references
+                images: originalNode.images ? JSON.parse(JSON.stringify(originalNode.images)) : [],
+                todos: originalNode.todos ? JSON.parse(JSON.stringify(originalNode.todos)) : []
+              };
+              
+              // Add the copied node to the data
+              currentData = {
+                nodes: [...currentData.nodes, copiedNode],
+                links: currentData.links
+              };
+              
+              // Set up dragging for the copy
+              draggingId = newId;
+              copySourceNodeId = id;
+              isCopyDragging = true;
+              
+              // Update selection to the copy
+              selectedNodeIds.clear();
+              selectedNodeIds.add(newId);
+              
+              // Update drag start position for the copy
+              nodeDragStartPos = { x: p.x, y: p.y, nodeId: newId, hasDragged: false };
+              
+              render();
+            }
           } else {
             // Prepare for potential drag (will be confirmed on move if mouse moves enough)
             draggingId = id;
@@ -2256,6 +2449,26 @@
           
           const clickedNodeId = wasClick ? draggingId : null;
           
+          // If this was a copy drag and it was just a click (no movement), remove the copy
+          if (isCopyDragging && wasClick) {
+            // Remove the copied node since there was no actual drag
+            currentData = {
+              nodes: currentData.nodes.filter(n => n.id !== draggingId),
+              links: currentData.links
+            };
+            render();
+          }
+          
+          // If this was a successful copy drag (with movement), update timeline and save
+          if (isCopyDragging && !wasClick) {
+            updateTimeline();
+            saveDataToDiv();
+          }
+          
+          // Reset copy dragging state
+          isCopyDragging = false;
+          copySourceNodeId = null;
+          
           draggingId = null;
           nodeDragStartPos = null;
           
@@ -2422,6 +2635,9 @@
             if (colorInput) colorInput.value = nodeColor;
             if (colorHexInput) colorHexInput.value = nodeColor.toUpperCase();
             
+            // Update color swatches
+            updateColorSwatches();
+            
             input.classList.remove("duplicate");
             if (warningEl) warningEl.style.display = "none";
             updateImageThumbnails(node);
@@ -2512,6 +2728,10 @@
           const defaultColor = "#6a6a6a";
           if (colorInput) colorInput.value = defaultColor;
           if (colorHexInput) colorHexInput.value = defaultColor;
+          
+          // Update color swatches
+          updateColorSwatches();
+          
           input.classList.remove("duplicate");
           if (warningEl) warningEl.style.display = "none";
           updateImageThumbnails(null); // Clear thumbnails
@@ -2569,7 +2789,8 @@
             const reader = new FileReader();
             reader.onload = (e) => {
               const base64 = e.target.result;
-              node.images.push(base64);
+              // Push image as object with data and empty comment
+              node.images.push({ data: base64, comment: '' });
               processed++;
               if (processed === files.length) {
                 currentData = {
@@ -2605,15 +2826,18 @@
           if (!node || !node.images || node.images.length === 0) return;
           
           node.images.forEach((imageData, index) => {
+            // Handle both old string format and new object format
+            const imageUrl = typeof imageData === 'string' ? imageData : imageData.data;
+            
             const thumbnail = document.createElement("div");
             thumbnail.className = "image-thumbnail";
             thumbnail.setAttribute("data-index", index);
-            if (node.backgroundImage === imageData) {
+            if (node.backgroundImage === imageUrl) {
               thumbnail.classList.add("active");
             }
             
             const img = document.createElement("img");
-            img.src = imageData;
+            img.src = imageUrl;
             img.alt = "Thumbnail " + (index + 1);
             thumbnail.appendChild(img);
             
@@ -2630,7 +2854,8 @@
         function openImageModal(nodeId, imageIndex) {
           const modal = document.getElementById("imageModal");
           const modalImg = document.getElementById("imageModalImg");
-          if (!modal || !modalImg) return;
+          const commentInput = document.getElementById("imageCommentInput");
+          if (!modal || !modalImg || !commentInput) return;
           
           const node = currentData.nodes.find(n => n.id === nodeId);
           if (!node || !node.images || node.images.length === 0) return;
@@ -2641,8 +2866,14 @@
           modalNodeId = nodeId;
           modalImageIndex = imageIndex;
           
-          // Display the image
-          modalImg.src = node.images[imageIndex];
+          // Get image data (handle both old string format and new object format)
+          const imageData = node.images[imageIndex];
+          const imageUrl = typeof imageData === 'string' ? imageData : imageData.data;
+          const imageComment = typeof imageData === 'object' ? (imageData.comment || '') : '';
+          
+          // Display the image and comment
+          modalImg.src = imageUrl;
+          commentInput.value = imageComment;
           modal.style.display = "flex";
         }
 
@@ -2667,8 +2898,17 @@
           
           modalImageIndex = newIndex;
           const modalImg = document.getElementById("imageModalImg");
+          const commentInput = document.getElementById("imageCommentInput");
           if (modalImg) {
-            modalImg.src = node.images[modalImageIndex];
+            // Get image data (handle both old string format and new object format)
+            const imageData = node.images[modalImageIndex];
+            const imageUrl = typeof imageData === 'string' ? imageData : imageData.data;
+            const imageComment = typeof imageData === 'object' ? (imageData.comment || '') : '';
+            
+            modalImg.src = imageUrl;
+            if (commentInput) {
+              commentInput.value = imageComment;
+            }
           }
         }
 
@@ -2755,6 +2995,9 @@
               toggleTodoItem(editingNodeId, index);
             });
             
+            const contentWrapper = document.createElement("div");
+            contentWrapper.className = "todo-item-content";
+            
             const textInput = document.createElement("input");
             textInput.type = "text";
             textInput.className = "todo-item-text";
@@ -2764,8 +3007,37 @@
             textInput.addEventListener("mousedown", (e) => {
               e.stopPropagation();
             });
+            
+            const timestamp = document.createElement("div");
+            timestamp.className = "todo-item-timestamp";
+            
+            const updateTimestamp = () => {
+              const date = new Date(Date.now());
+              timestamp.textContent = date.toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              });
+            };
+            
+            if (todo.timestamp) {
+              const date = new Date(todo.timestamp);
+              timestamp.textContent = date.toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              });
+            }
+            
             textInput.addEventListener("input", () => {
               updateTodoItemText(editingNodeId, index, textInput.value);
+              updateTimestamp();
             });
             textInput.addEventListener("keydown", (e) => {
               if (e.key === "Enter") {
@@ -2775,6 +3047,9 @@
               }
             });
             
+            contentWrapper.appendChild(textInput);
+            contentWrapper.appendChild(timestamp);
+            
             const deleteBtn = document.createElement("button");
             deleteBtn.className = "todo-item-delete";
             deleteBtn.textContent = "×";
@@ -2783,7 +3058,7 @@
             });
             
             todoItem.appendChild(checkbox);
-            todoItem.appendChild(textInput);
+            todoItem.appendChild(contentWrapper);
             todoItem.appendChild(deleteBtn);
             todoContainer.appendChild(todoItem);
           });
@@ -2800,7 +3075,7 @@
             node.todos = [];
           }
           
-          const newTodo = { text: "", checked: false };
+          const newTodo = { text: "", checked: false, timestamp: Date.now() };
           
           if (insertIndex === null || insertIndex === undefined) {
             // Add to end
@@ -2860,6 +3135,7 @@
           if (!node || !node.todos || !node.todos[index]) return;
           
           node.todos[index].checked = !node.todos[index].checked;
+          node.todos[index].timestamp = Date.now();
           
           // Update data
           currentData = {
@@ -2870,6 +3146,7 @@
           // Update display
           updateTodoList(node);
           saveDataToDiv();
+          render(); // Re-render to update unchecked task indicator
         }
 
         function updateTodoItemText(nodeId, index, text) {
@@ -2879,6 +3156,7 @@
           if (!node || !node.todos || !node.todos[index]) return;
           
           node.todos[index].text = text;
+          node.todos[index].timestamp = Date.now();
           
           // Update data (but don't re-render display on every keystroke)
           currentData = {
@@ -2897,12 +3175,14 @@
           if (!node || !node.images || imageIndex < 0 || imageIndex >= node.images.length) return;
           
           const imageToDelete = node.images[imageIndex];
+          // Get the actual image URL (handle both string and object format)
+          const imageUrl = typeof imageToDelete === 'string' ? imageToDelete : imageToDelete.data;
           
           // Remove the image from the array
           node.images.splice(imageIndex, 1);
           
           // If this image was the background image, clear it
-          if (node.backgroundImage === imageToDelete) {
+          if (node.backgroundImage === imageUrl) {
             node.backgroundImage = null;
           }
           
@@ -2921,7 +3201,9 @@
           if (!node || !node.images || !node.images[imageIndex]) return;
           
           const imageData = node.images[imageIndex];
-          node.backgroundImage = imageData;
+          // Get the actual image URL (handle both string and object format)
+          const imageUrl = typeof imageData === 'string' ? imageData : imageData.data;
+          node.backgroundImage = imageUrl;
           
           currentData = {
             nodes: currentData.nodes.map(n => n.id === editingNodeId ? node : n),
@@ -3166,6 +3448,35 @@
           }
         }
 
+        function updateColorSwatches() {
+          const swatchesContainer = document.getElementById("colorSwatches");
+          if (!swatchesContainer) return;
+          
+          swatchesContainer.innerHTML = "";
+          
+          // Sort colors by usage frequency or just display them
+          const colorsArray = Array.from(customColors);
+          
+          colorsArray.forEach(color => {
+            const swatch = document.createElement("div");
+            swatch.className = "color-swatch";
+            swatch.style.backgroundColor = color;
+            swatch.title = color;
+            
+            swatch.addEventListener("click", () => {
+              const colorInput = document.getElementById("nodeColorInput");
+              const colorHexInput = document.getElementById("nodeColorHexInput");
+              
+              if (colorInput) colorInput.value = color;
+              if (colorHexInput) colorHexInput.value = color.toUpperCase();
+              
+              updateNodeColor(color);
+            });
+            
+            swatchesContainer.appendChild(swatch);
+          });
+        }
+
         function updateNodeColor(color) {
           if (!editingNodeId) return;
 
@@ -3175,6 +3486,13 @@
           // Validate color (should be hex format)
           if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color)) {
             return; // Invalid color, don't update
+          }
+
+          // Add color to custom colors set (exclude default color)
+          const normalizedColor = color.toLowerCase();
+          if (normalizedColor !== "#6a6a6a") {
+            customColors.add(normalizedColor);
+            updateColorSwatches();
           }
 
           // Update node color

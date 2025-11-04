@@ -1,0 +1,448 @@
+================================================================================
+                    SEMANTIC MAP APPLICATION
+                   USER NEEDS & REQUIREMENTS
+================================================================================
+
+PROJECT OVERVIEW
+================================================================================
+A visual knowledge management application that allows users to create, organize,
+and connect information nodes in a circular semantic map layout. The application
+provides an intuitive interface for managing interconnected ideas, tasks, and
+multimedia content.
+
+
+CORE FUNCTIONALITY
+================================================================================
+
+1. NODE MANAGEMENT
+   - Create nodes by clicking on the canvas background
+   - Edit node properties (title, description, color)
+   - Delete nodes with confirmation dialog
+   - Copy nodes using ALT+Drag (creates duplicate with "(COPY)" suffix)
+   - Nodes display in a circular layout by default
+   - Manually position nodes via drag and drop
+   - Each node has a unique timestamp-based ID
+
+2. NODE PROPERTIES
+   - Title: Text identifier for the node (with duplicate detection)
+   - Description: Rich text field with clickable URL detection
+   - Color: Customizable hex color with color picker and manual input
+   - Background Image: Optional image set from uploaded images
+   - Images: Multiple image attachments with comments
+   - Todos: Task list with checkbox completion tracking
+   - Creation timestamp: Automatic tracking
+
+3. CONNECTION MANAGEMENT
+   - Create links between nodes using CTRL+Drag
+   - Visual representation with lines connecting node centers
+   - Bidirectional relationships
+   - Links maintained when nodes are moved
+
+4. SELECTION & MANIPULATION
+   - Single node selection: Click on node
+   - Multiple node selection: Shift+Click to toggle
+   - Box selection: Click and drag on canvas (with Shift for additive)
+   - Group dragging: Move multiple selected nodes together
+   - Visual feedback: White dashed stroke on selected nodes
+   - Clear selection: Click on canvas background
+
+
+VISUAL FEATURES
+================================================================================
+
+1. NODE VISUALIZATION
+   - Circular nodes (28px diameter)
+   - Customizable fill color
+   - Default stroke color (#3e3e3e)
+   - Background image support (clipped to circular shape)
+   - Text label below node (14px font)
+   - Search highlighting with white stroke
+   - Dimming for non-matching search results
+
+2. TASK INDICATOR
+   - Small red circle (10px diameter) at upper-right of node
+   - Displays when node has unchecked todos
+   - Black stroke (1.5px width)
+   - Does not inherit selection styling
+
+3. SELECTION FEEDBACK
+   - White dashed stroke (5, 3 pattern)
+   - 3px stroke width
+   - Applied to main node circle only
+
+4. COLOR MANAGEMENT
+   - Color picker input
+   - Hex code text input with validation
+   - Custom color swatches (auto-populated from used colors)
+   - Quick color selection from swatch palette
+   - Default color: #6a6a6a
+
+
+USER INTERACTIONS
+================================================================================
+
+1. MOUSE INTERACTIONS
+   - Left Click: Select node or create new node (on canvas)
+   - Left Drag: Move node
+   - CTRL+Drag: Create connection between nodes
+   - ALT+Drag: Copy node to new location
+   - Shift+Click: Toggle node selection
+   - Middle Mouse: Pan the canvas
+   - Right Click: Context menu on image thumbnails
+   - Double Click: (Reserved for future use)
+   - Box Selection: Click+Drag on canvas to select multiple nodes
+
+2. KEYBOARD SHORTCUTS
+   - Escape: Close fly-in panel or image modal
+   - Enter: (In todo input) Create new todo item
+   - Arrow Keys: Navigate between images in modal (Left/Right)
+   - Search: Real-time filtering of nodes by title
+
+3. ZOOM & PAN
+   - Mouse wheel: Zoom in/out (centered on mouse position)
+   - Middle mouse drag: Pan the canvas
+   - Zoom range: 0.1x to 5x
+   - Smooth zoom transitions
+
+4. NODE INTERACTION MODES
+   - Normal: Click to select, drag to move
+   - Connect: CTRL+Drag to create links
+   - Copy: ALT+Drag to duplicate
+   - Multi-select: Shift+Click or box selection
+
+
+DATA MANAGEMENT
+================================================================================
+
+1. PERSISTENCE
+   - Auto-save to hidden div (#semanticMapData)
+   - Data stored as JSON in data-nodes attribute
+   - Automatic save on any change
+   - No manual save required
+
+2. DATA STRUCTURE
+   - Nodes: Array of node objects with properties
+   - Links: Array of source-target relationships
+   - Node properties: id, title, description, color, x, y, images, 
+     backgroundImage, todos
+   - Image format: {data: base64, comment: string}
+   - Todo format: {text: string, checked: boolean, timestamp: number}
+
+3. BACKWARD COMPATIBILITY
+   - Handles legacy string-only image format
+   - Converts old node ID format (string) to new (number)
+   - Graceful migration on load
+
+4. TIMELINE
+   - Chronological list of all nodes by creation date
+   - Displays date (short month, day)
+   - Displays time (24-hour format)
+   - Click to zoom and open node editor
+
+
+FLY-IN PANEL (NODE EDITOR)
+================================================================================
+
+1. TITLE INPUT
+   - Text input with duplicate detection
+   - Visual warning for duplicate titles
+   - Auto-focus on panel open
+   - "Create Node" or "Edit Node" header
+
+2. DESCRIPTION EDITOR
+   - Textarea input with preview mode
+   - Automatic URL detection and linking
+   - Click URLs to open in new tab
+   - Switch between edit and preview modes
+
+3. COLOR SELECTOR
+   - Color picker (visual)
+   - Hex input field (text)
+   - Sync between picker and text input
+   - Custom color swatches below
+   - Clickable swatches for quick selection
+
+4. IMAGE MANAGEMENT
+   - Drag & drop zone for image upload
+   - Multiple image upload support
+   - Thumbnail gallery with previews
+   - Click thumbnail to view in modal
+   - Right-click context menu:
+     * Set as Background
+     * Delete image
+   - Clear background button (when background is set)
+   - Active indicator on background image thumbnail
+
+5. TODO LIST
+   - Add todo items with "+ Add Item" button
+   - Checkbox to mark complete/incomplete
+   - Text input (disabled when checked)
+   - Delete button (× symbol, appears on hover)
+   - Timestamp display below each todo (24-hour format)
+   - Timestamp updates on text change or check/uncheck
+   - Enter key creates new todo after current
+
+6. CONNECTED NODES
+   - Visual list of linked nodes
+   - Click to navigate to connected node
+   - Shows relationship structure
+
+7. DELETE BUTTON
+   - Visible only when editing existing node
+   - Opens confirmation modal
+   - Warning about link removal
+
+
+IMAGE MODAL
+================================================================================
+
+1. IMAGE DISPLAY
+   - Full-screen overlay (80vw × 80vh)
+   - Dark background (80% opacity)
+   - Image centered with contain fit
+   - Click outside to close
+   - Escape key to close
+
+2. NAVIGATION
+   - Left/Right arrow keys to navigate between images
+   - Circular navigation (wraps at ends)
+   - Keyboard disabled when typing in comment field
+
+3. COMMENT INPUT
+   - Textarea below image
+   - Placeholder: "Add a comment..."
+   - Auto-save on input
+   - Maintains comment when navigating images
+   - Click on comment area doesn't close modal
+   - Resizable vertically
+
+4. STYLING
+   - Flex column layout
+   - Image takes available space (flex: 1)
+   - Comment container fixed at bottom (flex-shrink: 0)
+   - Dark theme matching application
+
+
+SEARCH FUNCTIONALITY
+================================================================================
+
+1. SEARCH INPUT
+   - Top-left search bar
+   - Real-time filtering (no submit button)
+   - Matches against node titles (not IDs)
+   - Case-insensitive matching
+
+2. SEARCH RESULTS
+   - Matching nodes: White stroke (3px), full opacity
+   - Non-matching nodes: Dimmed (#666, 30% opacity)
+   - Labels also dimmed for non-matches
+   - Clear search restores normal view
+
+
+TIMELINE BAR
+================================================================================
+
+1. LAYOUT
+   - Fixed bottom bar spanning full width
+   - Dark background (#1a1a1a)
+   - Scrollable horizontally
+   - Auto-updates on node creation/deletion
+
+2. TIMELINE ENTRIES
+   - One entry per node (sorted by creation date, oldest first)
+   - Display format:
+     * Date (short month, day, year)
+     * Time (24-hour format, HH:MM)
+     * Title (or "Untitled")
+   - Hover effect for visibility
+   - Click to zoom/pan to node and open editor
+
+3. BEHAVIOR
+   - Clicking timeline entry:
+     * Selects the node
+     * Zooms and centers on node
+     * Opens fly-in panel for editing
+     * Shows white dashed selection stroke
+
+
+UI/UX REQUIREMENTS
+================================================================================
+
+1. VISUAL THEME
+   - Dark theme throughout
+   - Primary color: #4f8cff (blue)
+   - Surface color: #1e1e1e
+   - Text color: #e6e6e6
+   - Border color: #404040
+
+2. TYPOGRAPHY
+   - Font family: Inter, system-ui, sans-serif
+   - Node labels: 14px
+   - UI elements: 14px standard
+   - Timestamps: 10px (todos), gray color
+
+3. FEEDBACK & STATES
+   - Hover effects on interactive elements
+   - Cursor changes (grab, grabbing, pointer)
+   - Visual feedback for dragging
+   - Selection indicators (dashed stroke)
+   - Loading states handled gracefully
+
+4. RESPONSIVENESS
+   - SVG canvas adapts to window size
+   - Fly-in panel slides from right
+   - Modal overlays center on viewport
+   - Timeline spans full width
+
+5. ACCESSIBILITY
+   - Keyboard navigation support
+   - Clear visual indicators
+   - Tooltips on hover
+   - Error messages for invalid input
+
+
+TECHNICAL REQUIREMENTS
+================================================================================
+
+1. FILE FORMAT
+   - Single HTML file application
+   - Self-contained (no external dependencies)
+   - Pure JavaScript (no frameworks)
+   - SVG for node visualization
+   - Inline CSS
+
+2. BROWSER COMPATIBILITY
+   - Modern browser support (ES6+)
+   - SVG support required
+   - FileReader API for image upload
+   - localStorage not required (uses DOM storage)
+
+3. PERFORMANCE
+   - Efficient rendering on large graphs
+   - Smooth zoom/pan transitions
+   - Real-time search filtering
+   - Optimized re-rendering (preserves selection rectangle)
+
+4. DATA INTEGRITY
+   - Duplicate title warnings
+   - Unique node IDs (timestamp-based)
+   - Link cleanup on node deletion
+   - Validation for color inputs (hex format)
+
+5. IMAGE HANDLING
+   - Base64 encoding for storage
+   - Multiple formats supported (jpg, png, gif, webp)
+   - Circular clipping for background images
+   - Thumbnail generation for gallery
+   - Comment storage per image
+
+
+SECURITY & PRIVACY
+================================================================================
+
+1. DATA STORAGE
+   - Local storage only (no server communication)
+   - Data embedded in HTML file
+   - No external API calls
+   - URLs open in new tab with proper security
+
+2. INPUT VALIDATION
+   - Hex color validation (regex)
+   - Image format validation
+   - Title duplicate checking
+   - Safe URL rendering
+
+
+FUTURE ENHANCEMENTS (Implicit Requirements)
+================================================================================
+
+1. Export/Import
+   - Export as JSON
+   - Import from file
+   - Backup functionality
+
+2. Collaboration
+   - Multi-user support
+   - Real-time sync
+   - Version control
+
+3. Advanced Features
+   - Node grouping/categories
+   - Custom node shapes
+   - Link labels
+   - Hierarchical layouts
+   - Markdown support in descriptions
+   - Full-text search (descriptions & todos)
+
+4. Performance
+   - Virtual rendering for large datasets
+   - Lazy loading of images
+   - Undo/redo functionality
+
+
+USER WORKFLOW EXAMPLES
+================================================================================
+
+1. CREATE NEW SEMANTIC MAP
+   - Open application in browser
+   - Click on canvas to create first node
+   - Enter title in fly-in panel
+   - Add description, color, images as needed
+   - Click canvas to create more nodes
+   - CTRL+Drag to connect related nodes
+
+2. ORGANIZE EXISTING NODES
+   - Search for specific nodes
+   - Select multiple nodes (Shift+Click or box selection)
+   - Drag group to new position
+   - Adjust colors to categorize
+   - Add background images for visual identity
+
+3. MANAGE TASKS
+   - Open node in fly-in panel
+   - Add todo items
+   - Check off completed items
+   - Monitor red indicator for unchecked tasks
+   - View timestamps for task tracking
+
+4. WORK WITH IMAGES
+   - Drag images into upload zone
+   - Click thumbnail to view full size
+   - Add comments to images
+   - Set image as node background
+   - Navigate between images with arrows
+
+5. DUPLICATE WORKFLOW
+   - Find node to copy
+   - ALT+Drag to create copy
+   - Edit copied node title
+   - Adjust position and connections
+
+
+CONSTRAINTS & LIMITATIONS
+================================================================================
+
+1. TECHNICAL
+   - Client-side only (no backend)
+   - File size grows with images
+   - Browser memory limits for large maps
+   - No real-time collaboration
+
+2. FUNCTIONAL
+   - No undo/redo yet
+   - No export functionality
+   - Single map per file
+   - No nested nodes
+
+3. DESIGN
+   - Fixed circular node shape
+   - Fixed node size (14px radius)
+   - Linear link representation only
+
+
+================================================================================
+END OF REQUIREMENTS DOCUMENT
+================================================================================
+Last Updated: November 4, 2025
+Version: 1.0
+
