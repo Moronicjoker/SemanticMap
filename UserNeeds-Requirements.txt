@@ -1,0 +1,52 @@
+This application is designed for visual knowledge management. Based on the provided requirements, here is a set of high-level user needs and corresponding user requirements, expressed without specific solution details like "SVG," "fly-in panel," or "28px diameter."
+
+## 🚀 High-Level User Needs
+
+The primary user needs revolve around the efficient and intuitive creation, organization, and connection of visual information.
+
+* **Need for Visual Organization:** Users need a way to organize and view interconnected pieces of information in a non-linear, spatial format.
+* **Need for Information Capture:** Users need to capture different types of information—text, tasks, and media—within a single structure.
+* **Need for Relationship Mapping:** Users need to easily define and understand the relationships between different pieces of information.
+* **Need for Efficient Workflow:** Users need to manage their information and tasks quickly and efficiently using various interaction methods (mouse and keyboard).
+* **Need for Data Persistence and Retrieval:** Users need their work to be automatically saved and easily accessible.
+
+---
+
+## ✨ User Requirements (Solution-Free)
+
+### 1. Information Structuring & Representation
+* [cite_start]The system must allow the creation of distinct, fundamental units of information (nodes)[cite: 1].
+* [cite_start]The system must arrange these units in a circular, visual layout by default[cite: 1].
+* [cite_start]Users must be able to visually customize each unit (e.g., color, background image) for categorization and identity[cite: 4, 1].
+* [cite_start]Each unit must support a title, a detailed description, and attachment of multiple images/media[cite: 3, 4].
+
+### 2. Connection Management
+* [cite_start]The system must provide a clear mechanism to create and display bidirectional relationships (links) between any two information units[cite: 3, 4].
+* [cite_start]Relationships must remain stable and visually represented when units are repositioned[cite: 3].
+
+### 3. Content and Task Management
+* [cite_start]Each information unit must support a checklist/to-do list feature with completion tracking[cite: 4].
+* [cite_start]The system must visually alert the user to incomplete tasks within an information unit[cite: 6].
+* [cite_start]Text descriptions must automatically recognize and link URLs for external access[cite: 3, 11].
+
+### 4. Interaction and Manipulation
+* [cite_start]Users must be able to reposition individual and multiple selected information units[cite: 1, 5].
+* [cite_start]The system must support methods for selecting multiple units, including toggling selection and area-based selection[cite: 5].
+* [cite_start]Users must have the ability to quickly duplicate an information unit[cite: 3, 9].
+* [cite_start]The application must support smooth navigation of the visual canvas, including zooming and panning[cite: 8].
+* [cite_start]Key operations must have intuitive keyboard shortcuts (e.g., for navigation, editing, and closing views)[cite: 8].
+
+### 5. Search and Retrieval
+* [cite_start]The system must support real-time searching and filtering of information units based on their title[cite: 8, 15].
+* [cite_start]Search results must visually highlight matching units and diminish the visibility of non-matching units[cite: 6, 15].
+* [cite_start]The system must provide a chronological view of all created information units for historical access[cite: 10, 16].
+
+### 6. Data Integrity and Persistence
+* [cite_start]All user work must be automatically and continuously saved without requiring a manual save action[cite: 10].
+* [cite_start]The system must ensure that all information units have a unique identifier[cite: 3, 20].
+* [cite_start]The system must alert the user if they attempt to create a duplicate title for an information unit[cite: 3, 11, 20].
+* [cite_start]The system must maintain data consistency, such as ensuring relationship links are removed when an information unit is deleted[cite: 20].
+
+---
+
+Would you like me to elaborate on a specific area, such as the requirements for **Content and Task Management**, or perhaps focus on the **Technical Constraints**?
