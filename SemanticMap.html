@@ -2350,6 +2350,7 @@
                 
                 cpGroup.appendChild(cpCircle);
                 cpGroup.addEventListener("pointerdown", onControlPointPointerDown);
+                cpGroup.addEventListener("dblclick", onControlPointDoubleClick);
                 
                 edgesGroup.appendChild(cpGroup);
               });
@@ -3145,22 +3146,32 @@
           
           if (isNaN(linkIndex) || isNaN(cpIndex)) return;
           
-          // Check for double-click to remove control point
-          if (event.detail === 2) {
-            // Remove the control point
-            const link = currentData.links[linkIndex];
-            if (link && link.controlPoints && link.controlPoints.length > cpIndex) {
-              link.controlPoints.splice(cpIndex, 1);
-              
-              render();
-              saveDataToDiv();
-            }
-            return;
-          }
-          
           // Start dragging this control point
           draggingControlPoint = { linkIndex, controlPointIndex: cpIndex };
           suppressNextBackgroundClick = true;
+        }
+        
+        function onControlPointDoubleClick(event) {
+          event.stopPropagation();
+          event.preventDefault();
+          
+          const group = event.currentTarget;
+          const linkIndex = parseInt(group.getAttribute("data-link-index"));
+          const cpIndex = parseInt(group.getAttribute("data-cp-index"));
+          
+          if (isNaN(linkIndex) || isNaN(cpIndex)) return;
+          
+          // Remove the control point
+          const link = currentData.links[linkIndex];
+          if (link && link.controlPoints && link.controlPoints.length > cpIndex) {
+            link.controlPoints.splice(cpIndex, 1);
+            
+            // Cancel any ongoing drag operation
+            draggingControlPoint = null;
+            
+            render();
+            saveDataToDiv();
+          }
         }
 
         // Fly-in panel functions
