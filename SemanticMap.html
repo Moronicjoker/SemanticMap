@@ -1200,6 +1200,15 @@
             render(); // Re-render when window resizes
           });
 
+          // Warn user before leaving page if there's unsaved data
+          window.addEventListener("beforeunload", (e) => {
+            if (currentData.nodes.length > 0) {
+              e.preventDefault();
+              e.returnValue = "You have unsaved data. Please save the page (Ctrl+S or Cmd+S) to persist your changes.";
+              return e.returnValue;
+            }
+          });
+
           // Box selection and click handlers
           svg.addEventListener("pointerdown", (event) => {
             // Only react to background clicks, not on nodes/labels
@@ -1905,9 +1914,25 @@
           
           // Find all matching nodes
           const matchingNodes = currentData.nodes.filter(node => {
-            const nodeTitle = (node.title || "").toLowerCase();
             const queryLower = searchQuery.toLowerCase();
-            return nodeTitle.includes(queryLower);
+            
+            // Check title
+            const nodeTitle = (node.title || "").toLowerCase();
+            if (nodeTitle.includes(queryLower)) return true;
+            
+            // Check description
+            const nodeDescription = (node.description || "").toLowerCase();
+            if (nodeDescription.includes(queryLower)) return true;
+            
+            // Check todos
+            if (node.todos && Array.isArray(node.todos)) {
+              for (const todo of node.todos) {
+                const todoText = (todo.text || "").toLowerCase();
+                if (todoText.includes(queryLower)) return true;
+              }
+            }
+            
+            return false;
           });
           
           if (matchingNodes.length === 0) return;
@@ -2151,14 +2176,41 @@
               group.classList.add("selected");
             }
             
-            // Check if node matches search query (search by title, not ID)
+            // Check if node matches search query (search by title, description, and todos)
             let isHighlighted = false;
             let isDimmed = false;
             if (searchQuery) {
+              const queryLower = searchQuery.toLowerCase();
+              let matches = false;
+              
+              // Check title
               const nodeTitle = node.title || "";
               const nodeTitleLower = nodeTitle.toLowerCase();
-              const queryLower = searchQuery.toLowerCase();
               if (nodeTitleLower.includes(queryLower)) {
+                matches = true;
+              }
+              
+              // Check description
+              if (!matches) {
+                const nodeDescription = node.description || "";
+                const nodeDescriptionLower = nodeDescription.toLowerCase();
+                if (nodeDescriptionLower.includes(queryLower)) {
+                  matches = true;
+                }
+              }
+              
+              // Check todos
+              if (!matches && node.todos && Array.isArray(node.todos)) {
+                for (const todo of node.todos) {
+                  const todoText = (todo.text || "").toLowerCase();
+                  if (todoText.includes(queryLower)) {
+                    matches = true;
+                    break;
+                  }
+                }
+              }
+              
+              if (matches) {
                 isHighlighted = true;
                 group.classList.add("highlight");
               } else {
