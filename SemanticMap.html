@@ -504,13 +504,40 @@
         cursor: pointer;
         transition: all 0.2s;
         text-decoration: none;
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
       }
 
       .connected-node-link:hover {
         background: rgba(170, 170, 170, 0.1);
         border-color: var(--primary);
         color: var(--primary);
+      }
+
+      .connected-node-link-text {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .connected-node-delete {
+        background: transparent;
+        border: none;
+        color: #888;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+
+      .connected-node-delete:hover {
+        color: #ff4444;
+        transform: scale(1.2);
       }
 
       .connected-nodes-empty {
@@ -2326,6 +2353,7 @@
             hitPath.addEventListener("pointerdown", onConnectionPointerDown);
             hitPath.addEventListener("pointerenter", onConnectionPointerEnter);
             hitPath.addEventListener("pointerleave", onConnectionPointerLeave);
+            hitPath.addEventListener("dblclick", onConnectionDoubleClick);
             
             edgesGroup.appendChild(path);
             edgesGroup.appendChild(hitPath);
@@ -3086,6 +3114,11 @@
             link.controlPoints = [];
           }
           
+          // Limit to maximum of 2 control points per connection
+          if (link.controlPoints.length >= 2) {
+            return;
+          }
+          
           // Add the control point
           link.controlPoints.push({ x: p.x, y: p.y });
           
@@ -3134,6 +3167,20 @@
             const isNodeSelected = selectedNodeIds.has(link.source) || selectedNodeIds.has(link.target);
             path.setAttribute("stroke-width", isNodeSelected ? "2" : "1");
           }
+        }
+        
+        function onConnectionDoubleClick(event) {
+          event.stopPropagation();
+          event.preventDefault();
+          
+          const linkIndex = parseInt(event.currentTarget.getAttribute("data-link-index"));
+          if (isNaN(linkIndex)) return;
+          
+          // Remove the connection
+          currentData.links = currentData.links.filter((link, index) => index !== linkIndex);
+          
+          render();
+          saveDataToDiv();
         }
         
         function onControlPointPointerDown(event) {
@@ -3537,15 +3584,46 @@
             
             const linkElement = document.createElement("div");
             linkElement.className = "connected-node-link";
-            linkElement.textContent = connectedNode.title || "Untitled";
-            linkElement.title = connectedNode.title || "Untitled";
             
-            // Click handler: zoom to node and open fly-in panel
-            linkElement.addEventListener("click", () => {
+            // Create text element
+            const textElement = document.createElement("span");
+            textElement.className = "connected-node-link-text";
+            textElement.textContent = connectedNode.title || "Untitled";
+            textElement.title = connectedNode.title || "Untitled";
+            
+            // Create delete button
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "connected-node-delete";
+            deleteBtn.textContent = "×";
+            deleteBtn.title = "Delete connection";
+            deleteBtn.type = "button";
+            
+            // Delete button click handler
+            deleteBtn.addEventListener("click", (e) => {
+              e.stopPropagation(); // Prevent triggering the link click
+              
+              // Remove the connection from currentData.links
+              currentData.links = currentData.links.filter(link => 
+                !(link.source === nodeId && link.target === connectedNodeId) &&
+                !(link.target === nodeId && link.source === connectedNodeId)
+              );
+              
+              // Update the visualization
+              render();
+              saveDataToDiv();
+              
+              // Refresh the connected nodes list
+              updateConnectedNodes(nodeId);
+            });
+            
+            // Text element click handler: zoom to node and open fly-in panel
+            textElement.addEventListener("click", () => {
               zoomToNode(connectedNodeId);
               openFlyInPanel(connectedNodeId);
             });
             
+            linkElement.appendChild(textElement);
+            linkElement.appendChild(deleteBtn);
             connectedNodesContainer.appendChild(linkElement);
           });
         }
