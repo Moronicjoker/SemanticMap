@@ -1345,8 +1345,11 @@
               // Small delay to allow box selection to activate if mouse is being dragged
               setTimeout(() => {
                 // Check again if box selection activated
-                if (isBoxSelecting || suppressNextBackgroundClick) {
-                  suppressNextBackgroundClick = false;
+                // If potentialBoxSelectStart was cleared, it means box selection was initiated
+                if (isBoxSelecting || suppressNextBackgroundClick || potentialBoxSelectStart === null) {
+                  if (suppressNextBackgroundClick) {
+                    suppressNextBackgroundClick = false;
+                  }
                   return;
                 }
                 // Box selection didn't activate, so this was just a click - create node
@@ -3086,6 +3089,11 @@
           };
           render();
           saveDataToDiv();
+          
+          // Update the connected nodes list if the fly-in panel is open for either node
+          if (editingNodeId === sourceId || editingNodeId === targetId) {
+            updateConnectedNodes(editingNodeId);
+          }
         }
 
         // Connection bending event handlers
