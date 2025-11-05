@@ -106,6 +106,37 @@
         pointer-events: none;
       }
 
+      /* Filename input */
+      .filename-container {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+      }
+
+      .filename-input {
+        width: 280px;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 3px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .filename-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(106, 106, 106, 0.1);
+      }
+
+      .filename-input::placeholder {
+        color: var(--muted);
+      }
+
       /* Search input */
       .search-container {
         position: absolute;
@@ -905,6 +936,11 @@
   </head>
   <body>
     <main class="container">
+      <!-- Filename input -->
+      <div class="filename-container">
+        <input type="text" id="filenameInput" class="filename-input" placeholder="Untitled Map" />
+      </div>
+
       <!-- Search input -->
       <div class="search-container">
         <div class="search-wrapper">
@@ -921,7 +957,7 @@
       </div>
       
       <!-- Hidden editable div for local data persistence -->
-      <div id="semanticMapData" contenteditable="true" style="display: none;">{"nodes":[],"links":[]}</div>
+      <div id="semanticMapData" contenteditable="true" style="display: none;">{"nodes":[],"links":[],"filename":""}</div>
       
       <!-- Fly-in panel for editing node -->
       <div id="flyInPanel" class="fly-in-panel">
@@ -1050,17 +1086,27 @@
 
           // Load data from hidden div
           const dataDiv = document.getElementById("semanticMapData");
-          let initialData = { nodes: [], links: [] };
+          let initialData = { nodes: [], links: [], filename: "" };
           
           if (dataDiv && dataDiv.textContent) {
             try {
               initialData = JSON.parse(dataDiv.textContent);
               if (!Array.isArray(initialData.nodes)) initialData.nodes = [];
               if (!Array.isArray(initialData.links)) initialData.links = [];
+              if (!initialData.filename) initialData.filename = "";
             } catch (e) {
               console.warn("Failed to parse stored data, starting with empty map");
-              initialData = { nodes: [], links: [] };
+              initialData = { nodes: [], links: [], filename: "" };
             }
+          }
+
+          // Load filename into input
+          let filenameInput = document.getElementById("filenameInput");
+          if (filenameInput && initialData.filename) {
+            filenameInput.value = initialData.filename;
+            updatePageTitle(initialData.filename);
+          } else {
+            updatePageTitle("");
           }
 
           generateSemanticMap(initialData);
@@ -1200,6 +1246,15 @@
             });
           }
 
+          // Filename input handler
+          filenameInput = document.getElementById("filenameInput");
+          if (filenameInput) {
+            filenameInput.addEventListener("input", (e) => {
+              updatePageTitle(e.target.value);
+              saveDataToDiv(); // Save filename whenever it changes
+            });
+          }
+
           // Fly-in panel handlers
           const closeBtn = document.getElementById("flyInPanelClose");
           const titleInput = document.getElementById("nodeTitleInput");
@@ -1302,10 +1357,15 @@
             const colorHexInput = document.getElementById("nodeColorHexInput");
             
             if (colorInput && colorHexInput) {
-              // Sync color picker with hex input
+              // Sync color picker with hex input (real-time visual update)
               colorInput.addEventListener("input", (e) => {
                 colorHexInput.value = e.target.value.toUpperCase();
-                updateNodeColor(e.target.value);
+                updateNodeColor(e.target.value, false); // false = don't add to palette yet
+              });
+              
+              // Add to palette only when user finishes selecting color
+              colorInput.addEventListener("change", (e) => {
+                updateNodeColor(e.target.value, true); // true = add to palette
               });
               
               // Sync hex input with color picker
@@ -1314,7 +1374,7 @@
                 // Validate hex color
                 if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) {
                   colorInput.value = hex;
-                  updateNodeColor(hex);
+                  updateNodeColor(hex, true); // Add to palette when typing hex manually
                 }
               });
             }
@@ -1830,7 +1890,22 @@
         function saveDataToDiv() {
           const dataDiv = document.getElementById("semanticMapData");
           if (dataDiv) {
-            dataDiv.textContent = JSON.stringify(currentData, null, 2);
+            // Include filename in saved data
+            const filenameInput = document.getElementById("filenameInput");
+            const dataToSave = {
+              ...currentData,
+              filename: filenameInput ? filenameInput.value : ""
+            };
+            dataDiv.textContent = JSON.stringify(dataToSave, null, 2);
+          }
+        }
+
+        function updatePageTitle(filename) {
+          // Update the browser tab title
+          if (filename && filename.trim()) {
+            document.title = filename + " - Semantic Map";
+          } else {
+            document.title = "Semantic Map";
           }
         }
 
@@ -3475,7 +3550,7 @@
           });
         }
 
-        function updateNodeColor(color) {
+        function updateNodeColor(color, addToPalette = true) {
           if (!editingNodeId) return;
 
           const node = currentData.nodes.find(n => n.id === editingNodeId);
@@ -3486,11 +3561,13 @@
             return; // Invalid color, don't update
           }
 
-          // Add color to custom colors set (exclude default color)
-          const normalizedColor = color.toLowerCase();
-          if (normalizedColor !== "#6a6a6a") {
-            customColors.add(normalizedColor);
-            updateColorSwatches();
+          // Add color to custom colors set (exclude default color) only if addToPalette is true
+          if (addToPalette === true) {
+            const normalizedColor = color.toLowerCase();
+            if (normalizedColor !== "#6a6a6a") {
+              customColors.add(normalizedColor);
+              updateColorSwatches();
+            }
           }
 
           // Update node color
