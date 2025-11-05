@@ -112,6 +112,9 @@
         top: 20px;
         left: 20px;
         z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
       .filename-input {
@@ -135,6 +138,29 @@
 
       .filename-input::placeholder {
         color: var(--muted);
+      }
+
+      .show-all-button {
+        padding: 10px 16px;
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 3px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .show-all-button:hover {
+        background: #2a2a2a;
+        border-color: var(--primary);
+      }
+
+      .show-all-button:active {
+        transform: scale(0.98);
       }
 
       /* Search input */
@@ -873,6 +899,42 @@
         overflow-x: auto;
         overflow-y: hidden;
         padding: 12px 20px;
+        transition: height 0.3s ease, padding 0.3s ease;
+      }
+
+      .timeline-bar.collapsed {
+        height: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .timeline-toggle-button {
+        position: absolute;
+        bottom: 80px;
+        left: 20px;
+        width: 36px;
+        height: 36px;
+        background: rgb(6 6 6 / 90%);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 51;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text);
+        font-size: 18px;
+        transition: all 0.3s ease;
+      }
+
+      .timeline-toggle-button:hover {
+        background: rgba(79, 140, 255, 0.2);
+        border-color: var(--primary);
+      }
+
+      .timeline-toggle-button.collapsed {
+        bottom: 20px;
       }
 
       .timeline-container {
@@ -939,6 +1001,7 @@
       <!-- Filename input -->
       <div class="filename-container">
         <input type="text" id="filenameInput" class="filename-input" placeholder="Untitled Map" />
+        <button id="showAllButton" class="show-all-button">Show All</button>
       </div>
 
       <!-- Search input -->
@@ -951,8 +1014,11 @@
 
       <svg id="semanticMap" class="map" preserveAspectRatio="none" aria-label="Semantic map canvas" role="img"></svg>
       
+      <!-- Timeline toggle button -->
+      <button id="timelineToggle" class="timeline-toggle-button collapsed" title="Toggle Timeline">▲</button>
+      
       <!-- Timeline bar -->
-      <div id="timelineBar" class="timeline-bar">
+      <div id="timelineBar" class="timeline-bar collapsed">
         <div id="timelineContainer" class="timeline-container"></div>
       </div>
       
@@ -1255,6 +1321,14 @@
             });
           }
 
+          // Show All button handler
+          const showAllButton = document.getElementById("showAllButton");
+          if (showAllButton) {
+            showAllButton.addEventListener("click", () => {
+              zoomToAllNodes();
+            });
+          }
+
           // Fly-in panel handlers
           const closeBtn = document.getElementById("flyInPanelClose");
           const titleInput = document.getElementById("nodeTitleInput");
@@ -1272,6 +1346,17 @@
               }
             });
           }
+
+          // ESC key handler to close fly-in panel and deselect nodes
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              const flyInPanel = document.getElementById("flyInPanel");
+              if (flyInPanel && flyInPanel.classList.contains("open")) {
+                e.preventDefault();
+                closeFlyInPanel();
+              }
+            }
+          });
 
           // Modal handlers
           const modalCancel = document.getElementById("modalCancel");
@@ -1581,6 +1666,28 @@
 
           // Initialize timeline
           updateTimeline();
+
+          // Initialize timeline toggle button
+          const timelineToggle = document.getElementById("timelineToggle");
+          const timelineBar = document.getElementById("timelineBar");
+          
+          timelineToggle.addEventListener("click", () => {
+            const isCollapsed = timelineBar.classList.contains("collapsed");
+            
+            if (isCollapsed) {
+              // Expand timeline
+              timelineBar.classList.remove("collapsed");
+              timelineToggle.classList.remove("collapsed");
+              timelineToggle.textContent = "▼";
+              timelineToggle.title = "Hide Timeline";
+            } else {
+              // Collapse timeline
+              timelineBar.classList.add("collapsed");
+              timelineToggle.classList.add("collapsed");
+              timelineToggle.textContent = "▲";
+              timelineToggle.title = "Show Timeline";
+            }
+          });
         }
 
         function updateTimeline() {
