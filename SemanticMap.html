@@ -163,6 +163,33 @@
         transform: scale(0.98);
       }
 
+      .download-svg-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 100;
+        padding: 10px 16px;
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 3px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .download-svg-button:hover {
+        background: #2a2a2a;
+        border-color: var(--primary);
+      }
+
+      .download-svg-button:active {
+        transform: scale(0.98);
+      }
+
       /* Search input */
       .search-container {
         position: absolute;
@@ -1004,6 +1031,9 @@
         <button id="showAllButton" class="show-all-button">Show All</button>
       </div>
 
+      <!-- Download SVG button -->
+      <button id="downloadSvgButton" class="download-svg-button">Download SVG</button>
+
       <!-- Search input -->
       <div class="search-container">
         <div class="search-wrapper">
@@ -1335,6 +1365,14 @@
           if (showAllButton) {
             showAllButton.addEventListener("click", () => {
               zoomToAllNodes();
+            });
+          }
+
+          // Download SVG button handler
+          const downloadSvgButton = document.getElementById("downloadSvgButton");
+          if (downloadSvgButton) {
+            downloadSvgButton.addEventListener("click", () => {
+              downloadSVG();
             });
           }
 
@@ -1904,6 +1942,53 @@
           
           updateViewBox(newViewBoxX, newViewBoxY, clampedZoom);
           render(); // Re-render with new view
+        }
+
+        function downloadSVG() {
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          // Get the filename from input or use default
+          const filenameInput = document.getElementById("filenameInput");
+          let filename = filenameInput && filenameInput.value.trim() ? filenameInput.value.trim() : "Untitled Map";
+          
+          // Get current date and time in 24-hour format
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+          
+          const dateTimeStr = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+          const fullFilename = `${filename}_${dateTimeStr}.svg`;
+          
+          // Clone the SVG to avoid modifying the original
+          const svgClone = svg.cloneNode(true);
+          
+          // Get the SVG string
+          const serializer = new XMLSerializer();
+          let svgString = serializer.serializeToString(svgClone);
+          
+          // Add XML declaration and DOCTYPE if not present
+          if (!svgString.startsWith('<?xml')) {
+            svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
+          }
+          
+          // Create blob and download
+          const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fullFilename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up the URL object
+          URL.revokeObjectURL(url);
         }
 
         function zoomToSearchResults() {
