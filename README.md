@@ -1,5 +1,5 @@
 A visual knowledge management application that allows users to create, organize,
-and connect information nodes in a circular semantic map layout. The application
+and connect information nodes in a semantic map layout. The application
 provides an intuitive interface for managing interconnected ideas, tasks, and
 multimedia content.
 
