@@ -96,6 +96,32 @@
         stroke-width: 3 !important;
         stroke-dasharray: 1, 3;
       }
+      
+      /* Connection bending styles */
+      .connection-path {
+        transition: stroke-width 0.2s ease;
+      }
+      
+      .connection-hit-area {
+        cursor: pointer;
+      }
+      
+      .connection-hit-area:hover + .connection-path {
+        stroke-width: 2 !important;
+      }
+      
+      .control-point {
+        cursor: move;
+      }
+      
+      .control-point circle {
+        transition: r 0.2s ease, fill 0.2s ease;
+      }
+      
+      .control-point:hover circle {
+        r: 6;
+        fill: #e0e0e0;
+      }
 
       /* Selection rectangle */
       .selection-rect {
@@ -1175,6 +1201,10 @@
         let potentialBoxSelectStart = null; // Potential start point for box selection (activated on mouse move)
         let nodeDragStartPos = null; // {x, y} where node drag started (to detect if it was a click vs drag)
         const NODE_CLICK_TOLERANCE = 5; // Maximum pixel movement allowed for a click (vs drag)
+        
+        // Connection bending state
+        let draggingControlPoint = null; // { linkIndex, controlPointIndex } when dragging a control point
+        let hoveredConnection = null; // { linkIndex } when hovering over a connection
 
         function initializeApp() {
           const svg = document.getElementById("semanticMap");
@@ -2221,7 +2251,7 @@
           const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
           edgesGroup.setAttribute("fill", "none");
 
-          (currentData.links || []).forEach(link => {
+          (currentData.links || []).forEach((link, linkIndex) => {
             const a = idToPosition.get(link.source);
             const b = idToPosition.get(link.target);
             if (!a || !b) return;
@@ -2236,14 +2266,94 @@
               lineColor = sourceNode.color;
             }
             
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", String(a.x));
-            line.setAttribute("y1", String(a.y));
-            line.setAttribute("x2", String(b.x));
-            line.setAttribute("y2", String(b.y));
-            line.setAttribute("stroke", lineColor);
-            line.setAttribute("stroke-width", "1");
-            edgesGroup.appendChild(line);
+            // Initialize controlPoints array if not present
+            if (!link.controlPoints) {
+              link.controlPoints = [];
+            }
+            
+            // Build path based on control points
+            let pathData = `M ${a.x} ${a.y}`;
+            
+            if (link.controlPoints.length === 0) {
+              // Straight line
+              pathData += ` L ${b.x} ${b.y}`;
+            } else if (link.controlPoints.length === 1) {
+              // Quadratic bezier curve with one control point
+              const cp = link.controlPoints[0];
+              pathData += ` Q ${cp.x} ${cp.y} ${b.x} ${b.y}`;
+            } else {
+              // Cubic bezier curve with multiple control points
+              // Use the first two control points for cubic bezier, then line to remaining points
+              const cp1 = link.controlPoints[0];
+              const cp2 = link.controlPoints[1];
+              pathData += ` C ${cp1.x} ${cp1.y} ${cp2.x} ${cp2.y} `;
+              
+              // If more than 2 control points, draw through them
+              if (link.controlPoints.length > 2) {
+                for (let i = 2; i < link.controlPoints.length; i++) {
+                  const cp = link.controlPoints[i];
+                  pathData += ` ${cp.x} ${cp.y}`;
+                }
+                pathData += ` ${b.x} ${b.y}`;
+              } else {
+                pathData += ` ${b.x} ${b.y}`;
+              }
+            }
+            
+            // Check if either connected node is selected
+            const isNodeSelected = selectedNodeIds.has(link.source) || selectedNodeIds.has(link.target);
+            
+            // Create path element
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", pathData);
+            path.setAttribute("stroke", lineColor);
+            path.setAttribute("stroke-width", isNodeSelected ? "2" : "1");
+            path.setAttribute("fill", "none");
+            path.setAttribute("data-link-index", String(linkIndex));
+            path.classList.add("connection-path");
+            
+            // Add invisible wider path for easier clicking
+            const hitPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            hitPath.setAttribute("d", pathData);
+            hitPath.setAttribute("stroke", "transparent");
+            hitPath.setAttribute("stroke-width", "10");
+            hitPath.setAttribute("fill", "none");
+            hitPath.setAttribute("data-link-index", String(linkIndex));
+            hitPath.classList.add("connection-hit-area");
+            hitPath.style.cursor = "pointer";
+            
+            // Add event listeners to hit area
+            hitPath.addEventListener("pointerdown", onConnectionPointerDown);
+            hitPath.addEventListener("pointerenter", onConnectionPointerEnter);
+            hitPath.addEventListener("pointerleave", onConnectionPointerLeave);
+            
+            edgesGroup.appendChild(path);
+            edgesGroup.appendChild(hitPath);
+            
+            // Draw control points if either connected node is selected
+            if (isNodeSelected && link.controlPoints) {
+              link.controlPoints.forEach((cp, cpIndex) => {
+                const cpGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                cpGroup.classList.add("control-point");
+                cpGroup.setAttribute("data-link-index", String(linkIndex));
+                cpGroup.setAttribute("data-cp-index", String(cpIndex));
+                
+                // Control point handle (circle)
+                const cpCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                cpCircle.setAttribute("cx", String(cp.x));
+                cpCircle.setAttribute("cy", String(cp.y));
+                cpCircle.setAttribute("r", "5");
+                cpCircle.setAttribute("fill", "#ffffff");
+                cpCircle.setAttribute("stroke", lineColor);
+                cpCircle.setAttribute("stroke-width", "2");
+                cpCircle.style.cursor = "move";
+                
+                cpGroup.appendChild(cpCircle);
+                cpGroup.addEventListener("pointerdown", onControlPointPointerDown);
+                
+                edgesGroup.appendChild(cpGroup);
+              });
+            }
           });
           svg.appendChild(edgesGroup);
 
@@ -2562,6 +2672,20 @@
           const svg = document.getElementById("semanticMap");
           if (!svg) return;
           
+          // Handle control point dragging
+          if (draggingControlPoint) {
+            const p = getSvgPoint(svg, event);
+            if (!p) return;
+            
+            const link = currentData.links[draggingControlPoint.linkIndex];
+            if (link && link.controlPoints && link.controlPoints.length > draggingControlPoint.controlPointIndex) {
+              // Update control point position
+              link.controlPoints[draggingControlPoint.controlPointIndex] = { x: p.x, y: p.y };
+              render();
+            }
+            return;
+          }
+          
           // Check if we should start box selection (mouse moved after pointerdown)
           if (potentialBoxSelectStart && !isBoxSelecting && !draggingId && !isConnecting && !isPanning) {
             const p = getSvgPoint(svg, event);
@@ -2631,7 +2755,7 @@
             const deltaX = p.x - groupDragOffset.currentX;
             const deltaY = p.y - groupDragOffset.currentY;
             
-            // Calculate new positions for all selected nodes
+            // Calculate new positions for all selected nodes and update control points
             currentData = {
               nodes: currentData.nodes.map(n => {
                 if (selectedNodeIds.has(n.id)) {
@@ -2646,7 +2770,21 @@
                 }
                 return n;
               }),
-              links: currentData.links
+              links: currentData.links.map(link => {
+                // If both nodes of a connection are selected, move its control points too
+                if (selectedNodeIds.has(link.source) && selectedNodeIds.has(link.target)) {
+                  if (link.controlPoints && link.controlPoints.length > 0) {
+                    return {
+                      ...link,
+                      controlPoints: link.controlPoints.map(cp => ({
+                        x: cp.x + deltaX,
+                        y: cp.y + deltaY
+                      }))
+                    };
+                  }
+                }
+                return link;
+              })
             };
             // Update the current position for next move
             groupDragOffset.currentX = p.x;
@@ -2696,6 +2834,14 @@
         function onPointerUp(event) {
           const svg = document.getElementById("semanticMap");
           if (!svg) return;
+          
+          // Handle control point dragging end
+          if (draggingControlPoint) {
+            draggingControlPoint = null;
+            saveDataToDiv();
+            suppressNextBackgroundClick = true;
+            return;
+          }
           
           // Handle box selection end
           if (isBoxSelecting) {
@@ -2907,10 +3053,114 @@
           if (exists) return;
           currentData = {
             nodes: currentData.nodes,
-            links: [...currentData.links, { source: sourceId, target: targetId, weight: 1 }]
+            links: [...currentData.links, { source: sourceId, target: targetId, weight: 1, controlPoints: [] }]
           };
           render();
           saveDataToDiv();
+        }
+
+        // Connection bending event handlers
+        
+        function onConnectionPointerDown(event) {
+          event.stopPropagation();
+          event.preventDefault();
+          
+          const linkIndex = parseInt(event.currentTarget.getAttribute("data-link-index"));
+          if (isNaN(linkIndex)) return;
+          
+          const svg = document.getElementById("semanticMap");
+          if (!svg) return;
+          
+          const p = getSvgPoint(svg, event);
+          if (!p) return;
+          
+          // Add a control point only if one of the connected nodes is selected
+          const link = currentData.links[linkIndex];
+          if (!link) return;
+          
+          const isNodeSelected = selectedNodeIds.has(link.source) || selectedNodeIds.has(link.target);
+          if (!isNodeSelected) return;
+          
+          if (!link.controlPoints) {
+            link.controlPoints = [];
+          }
+          
+          // Add the control point
+          link.controlPoints.push({ x: p.x, y: p.y });
+          
+          // Start dragging the newly added control point
+          draggingControlPoint = { 
+            linkIndex, 
+            controlPointIndex: link.controlPoints.length - 1 
+          };
+          
+          render();
+          suppressNextBackgroundClick = true;
+        }
+        
+        function onConnectionPointerEnter(event) {
+          const linkIndex = parseInt(event.currentTarget.getAttribute("data-link-index"));
+          if (isNaN(linkIndex)) return;
+          
+          const link = currentData.links[linkIndex];
+          if (!link) return;
+          
+          // Only show hover effect if one of the connected nodes is selected
+          const isNodeSelected = selectedNodeIds.has(link.source) || selectedNodeIds.has(link.target);
+          
+          hoveredConnection = { linkIndex };
+          
+          // Highlight the connection if a connected node is selected
+          const path = event.currentTarget.previousSibling; // Get the visible path
+          if (path && path.classList.contains("connection-path") && isNodeSelected) {
+            path.setAttribute("stroke-width", "3");
+          }
+        }
+        
+        function onConnectionPointerLeave(event) {
+          const linkIndex = parseInt(event.currentTarget.getAttribute("data-link-index"));
+          if (isNaN(linkIndex)) return;
+          
+          const link = currentData.links[linkIndex];
+          if (!link) return;
+          
+          hoveredConnection = null;
+          
+          // Remove highlight from the connection
+          const path = event.currentTarget.previousSibling; // Get the visible path
+          if (path && path.classList.contains("connection-path")) {
+            // Check if a connected node is selected (to restore proper width)
+            const isNodeSelected = selectedNodeIds.has(link.source) || selectedNodeIds.has(link.target);
+            path.setAttribute("stroke-width", isNodeSelected ? "2" : "1");
+          }
+        }
+        
+        function onControlPointPointerDown(event) {
+          event.stopPropagation();
+          event.preventDefault();
+          
+          const group = event.currentTarget;
+          const linkIndex = parseInt(group.getAttribute("data-link-index"));
+          const cpIndex = parseInt(group.getAttribute("data-cp-index"));
+          
+          if (isNaN(linkIndex) || isNaN(cpIndex)) return;
+          
+          // Check for double-click to remove control point
+          if (event.detail === 2) {
+            // Remove the control point
+            const link = currentData.links[linkIndex];
+            if (link && link.controlPoints && link.controlPoints.length > cpIndex) {
+              link.controlPoints.splice(cpIndex, 1);
+              
+              render();
+              saveDataToDiv();
+            }
+            return;
+          }
+          
+          // Start dragging this control point
+          draggingControlPoint = { linkIndex, controlPointIndex: cpIndex };
+          suppressNextBackgroundClick = true;
         }
 
         // Fly-in panel functions
