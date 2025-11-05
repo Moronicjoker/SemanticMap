@@ -2838,10 +2838,17 @@
           if (warningEl) {
             warningEl.style.display = "none";
           }
+          
+          // Deselect all nodes
+          selectedNodeIds.clear();
+          
           editingNodeId = null;
           originalEditingNodeId = null;
           creatingNodeAt = null; // Clear creation position
           updateImageThumbnails(null); // Clear thumbnails
+          
+          // Re-render to remove selection highlighting
+          render();
         }
 
         function handleImageFiles(files) {
