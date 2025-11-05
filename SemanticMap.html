@@ -94,7 +94,7 @@
       g.node.selected circle:not(.task-indicator) {
         stroke: #ffffff !important;
         stroke-width: 3 !important;
-        stroke-dasharray: 5, 3;
+        stroke-dasharray: 1, 3;
       }
 
       /* Selection rectangle */
@@ -102,7 +102,7 @@
         fill: rgba(79, 140, 255, 0.1);
         stroke: var(--primary);
         stroke-width: 2;
-        stroke-dasharray: 4, 4;
+        stroke-dasharray: 1, 3;
         pointer-events: none;
       }
 
@@ -2372,12 +2372,12 @@
               // Selected nodes: CSS will handle the dashed border via .selected class
               // Don't set stroke here - let CSS handle it completely via .selected class
               // Just ensure default stroke is set so CSS can override it
-              const strokeColor = node.backgroundImage ? nodeColor : "#3e3e3e";
+              const strokeColor = node.backgroundImage ? nodeColor : "#101010ff";
               circle.setAttribute("stroke", strokeColor);
               circle.setAttribute("stroke-width", "2");
             } else {
               // Use node color for stroke when background image is set
-              const strokeColor = node.backgroundImage ? nodeColor : "#3e3e3e";
+              const strokeColor = node.backgroundImage ? nodeColor : "#101010ff";
               circle.setAttribute("stroke", strokeColor);
               circle.setAttribute("stroke-width", "2");
             }
