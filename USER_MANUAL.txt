@@ -244,8 +244,8 @@ links, and to-do lists. See Section 7 for details.
 
 3.4 Connecting Nodes
 ---------------------
-1. Hold Shift and click the first node (source)
-2. A dashed line appears from the node
+1. Hold Ctrl and click and hold the first node (source)
+2. A dashed line appears from the node when moving the mouse cursor
 3. Move your mouse - the line follows your cursor
 4. Click the second node (target) to complete the connection
 5. A solid line now connects the two nodes
