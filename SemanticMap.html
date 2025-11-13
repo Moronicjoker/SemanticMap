@@ -379,7 +379,7 @@
         color: var(--muted);
       }
 
-      .fly-in-panel-field input:not(.todo-item-checkbox),
+      .fly-in-panel-field input,
       .fly-in-panel-field textarea {
         width: 100%;
         padding: 10px 12px;
@@ -547,123 +547,6 @@
         font-style: italic;
       }
 
-      /* Todo list */
-      .todo-container {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        max-height: 200px;
-        overflow-y: auto;
-        margin-bottom: 10px;
-      }
-
-      .todo-item {
-        display: flex;
-        gap: 8px;
-        padding: 8px 12px;
-        background: #2a2a2a;
-        border-radius: 3px;
-        transition: all 0.2s;
-      }
-
-      .todo-item:hover {
-        background: rgba(170, 170, 170, 0.1);
-        border-color: var(--primary);
-      }
-
-      .todo-item:hover .todo-item-delete {
-        opacity: 1;
-      }
-
-      .todo-item-checkbox {
-        width: 18px !important;
-        height: 18px;
-        cursor: pointer;
-        flex-shrink: 0;
-        margin-top: 10px;
-      }
-
-      .todo-item-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 0;
-      }
-
-      .todo-item-text {
-        width: 100%;
-        padding: 2px 4px;
-        margin: 0;
-        background: transparent;
-        border: 1px solid transparent;
-        border-radius: 2px;
-        color: var(--text);
-        font-size: 14px;
-        font-family: inherit;
-        cursor: text;
-      }
-
-      .todo-item-timestamp {
-        font-size: 10px;
-        color: #808080;
-        padding-left: 4px;
-      }
-
-      .todo-item-text:focus {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 2px;
-        outline: 1px solid var(--primary);
-        outline-offset: -1px;
-      }
-
-      .todo-item-text:disabled {
-        cursor: default;
-      }
-
-      .todo-item.checked .todo-item-text {
-        text-decoration: line-through;
-        opacity: 0.6;
-      }
-
-      .todo-item-delete {
-        opacity: 0;
-        width: 20px;
-        height: 20px;
-        border: none;
-        background: transparent;
-        color: var(--text);
-        cursor: pointer;
-        font-size: 16px;
-        line-height: 1;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.2s;
-        flex-shrink: 0;
-      }
-
-      .todo-item-delete:hover {
-        color: #ff6b6b;
-      }
-
-      .add-todo-btn {
-        padding: 8px 12px;
-        background: #2a2a2a;
-        border: 1px solid #404040;
-        border-radius: 3px;
-        color: var(--text);
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .add-todo-btn:hover {
-        background: rgba(170, 170, 170, 0.1);
-        border-color: var(--primary);
-        color: var(--primary);
-      }
 
       .fly-in-panel-field input:focus,
       .fly-in-panel-field textarea:focus {
@@ -1074,6 +957,60 @@
         text-align: center;
         line-height: 1.2;
       }
+
+      /* Node link autocomplete dropdown */
+      .node-link-autocomplete {
+        position: absolute;
+        background: var(--surface);
+        border: 1px solid #404040;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 10000;
+        display: none;
+        min-width: 250px;
+        max-width: 400px;
+      }
+
+      .node-link-autocomplete.visible {
+        display: block;
+      }
+
+      .autocomplete-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--text);
+        border-bottom: 1px solid #333333;
+        transition: background 100ms ease;
+      }
+
+      .autocomplete-item:last-child {
+        border-bottom: none;
+      }
+
+      .autocomplete-item:hover,
+      .autocomplete-item.selected {
+        background: rgba(106, 106, 106, 0.2);
+      }
+
+      .autocomplete-item-title {
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .autocomplete-item-id {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .autocomplete-no-results {
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--muted);
+        font-style: italic;
+      }
     </style>
   </head>
   <body>
@@ -1126,8 +1063,8 @@
             </div>
           </div>
           <div class="fly-in-panel-field">
-            <label for="nodeDescriptionInput">Description</label>
-            <textarea id="nodeDescriptionInput" placeholder="Enter node description or notes. URLs will be automatically converted to clickable links." rows="8"></textarea>
+            <label for="nodeDescriptionInput">Description & Notes (Markdown Supported)</label>
+            <textarea id="nodeDescriptionInput" placeholder="Enter node description, notes, and todos. Supports Markdown:\n- [ ] Unchecked todo\n- [x] Checked todo\n**bold**, *italic*, [links](url)\n[[ to link to other nodes" rows="12"></textarea>
             <div id="descriptionPreview" class="description-preview"></div>
           </div>
           <div class="fly-in-panel-field">
@@ -1142,11 +1079,6 @@
           <div class="fly-in-panel-field">
             <label>Connected Nodes</label>
             <div id="connectedNodes" class="connected-nodes"></div>
-          </div>
-          <div class="fly-in-panel-field">
-            <label>Todo List</label>
-            <div id="todoContainer" class="todo-container"></div>
-            <button id="addTodoItemBtn" class="add-todo-btn" type="button">+ Add Item</button>
           </div>
           <div class="fly-in-panel-field">
             <label for="nodeColorInput">Color</label>
@@ -1174,6 +1106,9 @@
           </div>
         </div>
       </div>
+
+      <!-- Node link autocomplete dropdown -->
+      <div id="nodeLinkAutocomplete" class="node-link-autocomplete"></div>
 
       <!-- Delete confirmation modal -->
       <div id="deleteConfirmModal" class="modal-overlay" style="display: none;">
@@ -1232,6 +1167,12 @@
         // Connection bending state
         let draggingControlPoint = null; // { linkIndex, controlPointIndex } when dragging a control point
         let hoveredConnection = null; // { linkIndex } when hovering over a connection
+
+        // Node link autocomplete state
+        let autocompleteVisible = false;
+        let autocompletePosition = null; // { start, end } - position of [[ trigger in textarea
+        let autocompleteSelectedIndex = 0;
+        let autocompleteFilteredNodes = [];
 
         function initializeApp() {
           const svg = document.getElementById("semanticMap");
@@ -1499,7 +1440,18 @@
             const descriptionInput = document.getElementById("nodeDescriptionInput");
             const descriptionPreview = document.getElementById("descriptionPreview");
             if (descriptionInput) {
-              descriptionInput.addEventListener("input", updateNodeDescriptionOnInput);
+              descriptionInput.addEventListener("input", (e) => {
+                updateNodeDescriptionOnInput(e);
+                // Check for node link trigger after updating
+                checkForNodeLinkTrigger(descriptionInput);
+              });
+              
+              // Handle autocomplete keyboard navigation
+              descriptionInput.addEventListener("keydown", (e) => {
+                const handled = handleNodeLinkAutocompleteKeydown(e, descriptionInput);
+                // If autocomplete handled the key, don't do anything else
+                if (handled) return;
+              });
               
               // When input gains focus, show it and hide preview
               descriptionInput.addEventListener("focus", () => {
@@ -1511,6 +1463,14 @@
               
               // When input loses focus, hide it and show preview
               descriptionInput.addEventListener("blur", () => {
+                // Hide autocomplete when losing focus (with a small delay to allow clicks on autocomplete items)
+                setTimeout(() => {
+                  hideNodeLinkAutocomplete();
+                }, 200);
+                
+                // Add timestamps to any checkbox lines that don't have them
+                addTimestampsToCheckboxes(descriptionInput);
+                
                 // Update preview with current content
                 updateDescriptionPreview();
                 descriptionInput.style.display = "none";
@@ -1668,16 +1628,6 @@
             clearBackgroundBtn.addEventListener("click", () => {
               if (editingNodeId !== null) {
                 clearNodeBackgroundImage();
-              }
-            });
-          }
-
-          // Todo list add button
-          const addTodoItemBtn = document.getElementById("addTodoItemBtn");
-          if (addTodoItemBtn) {
-            addTodoItemBtn.addEventListener("click", () => {
-              if (editingNodeId !== null) {
-                addTodoItem(editingNodeId);
               }
             });
           }
@@ -2069,14 +2019,6 @@
             const nodeDescription = (node.description || "").toLowerCase();
             if (nodeDescription.includes(queryLower)) return true;
             
-            // Check todos
-            if (node.todos && Array.isArray(node.todos)) {
-              for (const todo of node.todos) {
-                const todoText = (todo.text || "").toLowerCase();
-                if (todoText.includes(queryLower)) return true;
-              }
-            }
-            
             return false;
           });
           
@@ -2214,8 +2156,7 @@
               description: node.description || "",
               color: node.color || "#6a6a6a",
               images: node.images || [],
-              backgroundImage: node.backgroundImage || null,
-              todos: node.todos || []
+              backgroundImage: node.backgroundImage || null
             };
           }) : [];
           
@@ -2223,6 +2164,13 @@
             nodes: migratedNodes,
             links: Array.isArray(data.links) ? [...data.links] : []
           };
+          
+          // Sync connections from node links in descriptions on load
+          migratedNodes.forEach(node => {
+            if (node.description && node.id) {
+              syncConnectionsFromDescription(node.id, node.description);
+            }
+          });
           
           // Initialize custom colors from existing nodes
           customColors.clear();
@@ -2236,6 +2184,204 @@
           render();
           saveDataToDiv();
           updateTimeline(); // Update timeline on load
+        }
+
+        // Node link autocomplete functions
+        function showNodeLinkAutocomplete(textarea, filterText = "") {
+          const autocomplete = document.getElementById("nodeLinkAutocomplete");
+          if (!autocomplete || !textarea) return;
+
+          // Filter nodes based on filterText
+          autocompleteFilteredNodes = currentData.nodes.filter(node => {
+            const title = (node.title || "").toLowerCase();
+            const filter = filterText.toLowerCase();
+            return title.includes(filter);
+          });
+
+          // Clear and populate autocomplete list
+          autocomplete.innerHTML = "";
+          
+          if (autocompleteFilteredNodes.length === 0) {
+            const noResults = document.createElement("div");
+            noResults.className = "autocomplete-no-results";
+            noResults.textContent = "No nodes found";
+            autocomplete.appendChild(noResults);
+          } else {
+            autocompleteFilteredNodes.forEach((node, index) => {
+              const item = document.createElement("div");
+              item.className = "autocomplete-item";
+              if (index === autocompleteSelectedIndex) {
+                item.classList.add("selected");
+              }
+              item.setAttribute("data-node-id", node.id);
+              item.setAttribute("data-index", index);
+              
+              const title = document.createElement("div");
+              title.className = "autocomplete-item-title";
+              title.textContent = node.title || `Node ${node.id}`;
+              item.appendChild(title);
+              
+              const idLabel = document.createElement("div");
+              idLabel.className = "autocomplete-item-id";
+              idLabel.textContent = `ID: ${node.id}`;
+              item.appendChild(idLabel);
+              
+              // Click handler
+              item.addEventListener("click", () => {
+                insertNodeLink(textarea, node);
+              });
+              
+              // Hover handler
+              item.addEventListener("mouseenter", () => {
+                autocompleteSelectedIndex = index;
+                updateAutocompleteSelection();
+              });
+              
+              autocomplete.appendChild(item);
+            });
+          }
+
+          // Position the autocomplete dropdown near the cursor
+          const textareaRect = textarea.getBoundingClientRect();
+          const cursorPos = textarea.selectionStart;
+          
+          // Simple positioning: below and to the left of the textarea
+          // In a more advanced implementation, you could calculate exact cursor position
+          autocomplete.style.left = textareaRect.left + "px";
+          autocomplete.style.top = (textareaRect.top + 60) + "px";
+          
+          autocomplete.classList.add("visible");
+          autocompleteVisible = true;
+        }
+
+        function hideNodeLinkAutocomplete() {
+          const autocomplete = document.getElementById("nodeLinkAutocomplete");
+          if (!autocomplete) return;
+          
+          autocomplete.classList.remove("visible");
+          autocompleteVisible = false;
+          autocompleteSelectedIndex = 0;
+          autocompleteFilteredNodes = [];
+          autocompletePosition = null;
+        }
+
+        function updateAutocompleteSelection() {
+          const autocomplete = document.getElementById("nodeLinkAutocomplete");
+          if (!autocomplete) return;
+          
+          const items = autocomplete.querySelectorAll(".autocomplete-item");
+          items.forEach((item, index) => {
+            if (index === autocompleteSelectedIndex) {
+              item.classList.add("selected");
+              item.scrollIntoView({ block: "nearest" });
+            } else {
+              item.classList.remove("selected");
+            }
+          });
+        }
+
+        function insertNodeLink(textarea, node) {
+          if (!textarea || !autocompletePosition) return;
+          
+          const value = textarea.value;
+          const before = value.substring(0, autocompletePosition.start);
+          const after = value.substring(textarea.selectionStart);
+          
+          // Insert link in format [[NodeTitle|nodeId]]
+          const linkText = `[[${node.title || `Node ${node.id}`}|${node.id}]]`;
+          textarea.value = before + linkText + after;
+          
+          // Position cursor after the inserted link
+          const newCursorPos = before.length + linkText.length;
+          textarea.selectionStart = newCursorPos;
+          textarea.selectionEnd = newCursorPos;
+          
+          // Trigger input event to update the node
+          textarea.dispatchEvent(new Event("input", { bubbles: true }));
+          
+          // Hide autocomplete
+          hideNodeLinkAutocomplete();
+          
+          // Focus back on textarea
+          textarea.focus();
+        }
+
+        function handleNodeLinkAutocompleteKeydown(event, textarea) {
+          if (!autocompleteVisible) return false;
+          
+          switch (event.key) {
+            case "ArrowDown":
+              event.preventDefault();
+              autocompleteSelectedIndex = Math.min(
+                autocompleteSelectedIndex + 1,
+                autocompleteFilteredNodes.length - 1
+              );
+              updateAutocompleteSelection();
+              return true;
+              
+            case "ArrowUp":
+              event.preventDefault();
+              autocompleteSelectedIndex = Math.max(autocompleteSelectedIndex - 1, 0);
+              updateAutocompleteSelection();
+              return true;
+              
+            case "Enter":
+              event.preventDefault();
+              if (autocompleteFilteredNodes.length > 0 && 
+                  autocompleteSelectedIndex >= 0 && 
+                  autocompleteSelectedIndex < autocompleteFilteredNodes.length) {
+                insertNodeLink(textarea, autocompleteFilteredNodes[autocompleteSelectedIndex]);
+              }
+              return true;
+              
+            case "Escape":
+              event.preventDefault();
+              hideNodeLinkAutocomplete();
+              return true;
+              
+            default:
+              return false;
+          }
+        }
+
+        function checkForNodeLinkTrigger(textarea) {
+          if (!textarea) return;
+          
+          const value = textarea.value;
+          const cursorPos = textarea.selectionStart;
+          
+          // Check if we just typed [[ or if we're inside [[ ... ]]
+          // Look backwards from cursor to find [[
+          let searchStart = Math.max(0, cursorPos - 50); // Look back up to 50 chars
+          let lastBracketPos = -1;
+          
+          for (let i = cursorPos - 1; i >= searchStart; i--) {
+            if (value[i] === "[" && value[i - 1] === "[") {
+              lastBracketPos = i - 1;
+              break;
+            }
+            // If we hit a closing ]] or newline, stop searching
+            if ((value[i] === "]" && value[i + 1] === "]") || value[i] === "\n") {
+              break;
+            }
+          }
+          
+          if (lastBracketPos >= 0) {
+            // Check if there's a closing ]] between [[ and cursor
+            const textBetween = value.substring(lastBracketPos + 2, cursorPos);
+            if (!textBetween.includes("]]")) {
+              // We're inside a [[ trigger!
+              autocompletePosition = { start: lastBracketPos, end: cursorPos };
+              const filterText = textBetween;
+              showNodeLinkAutocomplete(textarea, filterText);
+              return;
+            }
+          }
+          
+          // If we get here, we're not in a [[ trigger
+          if (autocompleteVisible) {
+            hideNodeLinkAutocomplete();
+          }
         }
 
         function render() {
@@ -2426,17 +2572,6 @@
                 }
               }
               
-              // Check todos
-              if (!matches && node.todos && Array.isArray(node.todos)) {
-                for (const todo of node.todos) {
-                  const todoText = (todo.text || "").toLowerCase();
-                  if (todoText.includes(queryLower)) {
-                    matches = true;
-                    break;
-                  }
-                }
-              }
-              
               if (matches) {
                 isHighlighted = true;
                 group.classList.add("highlight");
@@ -2526,10 +2661,15 @@
             
             circleGroup.appendChild(circle);
             
-            // Add red indicator for unchecked tasks
-            if (node.todos && node.todos.length > 0) {
-              const hasUncheckedTasks = node.todos.some(todo => !todo.checked);
-              if (hasUncheckedTasks) {
+            // Add red indicator for unchecked todos in description (markdown checkboxes)
+            if (node.description) {
+              const descriptionLines = node.description.split('\n');
+              const hasUncheckedTodos = descriptionLines.some(line => {
+                // Match markdown checkbox syntax: - [ ] (unchecked)
+                return /^\s*-\s*\[\s\]\s*.+/.test(line);
+              });
+              
+              if (hasUncheckedTodos) {
                 const indicator = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 indicator.classList.add("task-indicator");
                 indicator.setAttribute("cx", String(p.x + 10));
@@ -2576,7 +2716,7 @@
             id = Date.now() + Math.random();
           }
           currentData = {
-            nodes: [...currentData.nodes, { id, title, x, y, description: "", color: "#6a6a6a", images: [], backgroundImage: null, todos: [] }],
+            nodes: [...currentData.nodes, { id, title, x, y, description: "", color: "#6a6a6a", images: [], backgroundImage: null }],
             links: currentData.links
           };
           render();
@@ -2667,8 +2807,7 @@
                 x: originalNode.x || p.x,
                 y: originalNode.y || p.y,
                 // Deep copy arrays to avoid shared references
-                images: originalNode.images ? JSON.parse(JSON.stringify(originalNode.images)) : [],
-                todos: originalNode.todos ? JSON.parse(JSON.stringify(originalNode.todos)) : []
+                images: originalNode.images ? JSON.parse(JSON.stringify(originalNode.images)) : []
               };
               
               // Add the copied node to the data
@@ -3287,7 +3426,6 @@
             if (warningEl) warningEl.style.display = "none";
             updateImageThumbnails(node);
             updateConnectedNodes(nodeId);
-            updateTodoList(node);
             panel.classList.add("open");
           }
         }
@@ -3367,7 +3505,6 @@
           if (warningEl) warningEl.style.display = "none";
           updateImageThumbnails(null); // Clear thumbnails
           updateConnectedNodes(null); // Clear connected nodes
-          updateTodoList(null); // Clear todo list
           panel.classList.add("open");
           input.focus();
         }
@@ -3636,209 +3773,6 @@
           });
         }
 
-        function updateTodoList(node) {
-          const todoContainer = document.getElementById("todoContainer");
-          if (!todoContainer) return;
-          
-          todoContainer.innerHTML = "";
-          
-          if (!node) {
-            return;
-          }
-          
-          // Ensure todos array exists
-          if (!node.todos) {
-            node.todos = [];
-          }
-          
-          // Render each todo item
-          node.todos.forEach((todo, index) => {
-            const todoItem = document.createElement("div");
-            todoItem.className = `todo-item ${todo.checked ? 'checked' : ''}`;
-            
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.className = "todo-item-checkbox";
-            checkbox.checked = todo.checked || false;
-            checkbox.addEventListener("change", () => {
-              toggleTodoItem(editingNodeId, index);
-            });
-            
-            const contentWrapper = document.createElement("div");
-            contentWrapper.className = "todo-item-content";
-            
-            const textInput = document.createElement("input");
-            textInput.type = "text";
-            textInput.className = "todo-item-text";
-            textInput.value = todo.text || "";
-            textInput.placeholder = "Enter todo item...";
-            textInput.disabled = todo.checked || false;
-            textInput.addEventListener("mousedown", (e) => {
-              e.stopPropagation();
-            });
-            
-            const timestamp = document.createElement("div");
-            timestamp.className = "todo-item-timestamp";
-            
-            const updateTimestamp = () => {
-              const date = new Date(Date.now());
-              timestamp.textContent = date.toLocaleString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric',
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-              });
-            };
-            
-            if (todo.timestamp) {
-              const date = new Date(todo.timestamp);
-              timestamp.textContent = date.toLocaleString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric',
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-              });
-            }
-            
-            textInput.addEventListener("input", () => {
-              updateTodoItemText(editingNodeId, index, textInput.value);
-              updateTimestamp();
-            });
-            textInput.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                // Add new item after this one
-                addTodoItem(editingNodeId, index + 1);
-              }
-            });
-            
-            contentWrapper.appendChild(textInput);
-            contentWrapper.appendChild(timestamp);
-            
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "todo-item-delete";
-            deleteBtn.textContent = "×";
-            deleteBtn.addEventListener("click", () => {
-              deleteTodoItem(editingNodeId, index);
-            });
-            
-            todoItem.appendChild(checkbox);
-            todoItem.appendChild(contentWrapper);
-            todoItem.appendChild(deleteBtn);
-            todoContainer.appendChild(todoItem);
-          });
-        }
-
-        function addTodoItem(nodeId, insertIndex = null) {
-          if (nodeId === null) return;
-          
-          const node = currentData.nodes.find(n => n.id === nodeId);
-          if (!node) return;
-          
-          // Ensure todos array exists
-          if (!node.todos) {
-            node.todos = [];
-          }
-          
-          const newTodo = { text: "", checked: false, timestamp: Date.now() };
-          
-          if (insertIndex === null || insertIndex === undefined) {
-            // Add to end
-            node.todos.push(newTodo);
-            insertIndex = node.todos.length - 1;
-          } else {
-            // Insert at specific index
-            node.todos.splice(insertIndex, 0, newTodo);
-          }
-          
-          // Update data
-          currentData = {
-            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
-            links: currentData.links
-          };
-          
-          // Update display
-          updateTodoList(node);
-          saveDataToDiv();
-          render(); // Re-render to update unchecked task indicator
-          
-          // Focus the new todo item's text input
-          setTimeout(() => {
-            const todoContainer = document.getElementById("todoContainer");
-            if (todoContainer) {
-              const todoItems = todoContainer.querySelectorAll(".todo-item-text");
-              if (todoItems[insertIndex]) {
-                todoItems[insertIndex].focus();
-                todoItems[insertIndex].select();
-              }
-            }
-          }, 50);
-        }
-
-        function deleteTodoItem(nodeId, index) {
-          if (nodeId === null) return;
-          
-          const node = currentData.nodes.find(n => n.id === nodeId);
-          if (!node || !node.todos) return;
-          
-          node.todos.splice(index, 1);
-          
-          // Update data
-          currentData = {
-            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
-            links: currentData.links
-          };
-          
-          // Update display
-          updateTodoList(node);
-          saveDataToDiv();
-          render(); // Re-render to update unchecked task indicator
-        }
-
-        function toggleTodoItem(nodeId, index) {
-          if (nodeId === null) return;
-          
-          const node = currentData.nodes.find(n => n.id === nodeId);
-          if (!node || !node.todos || !node.todos[index]) return;
-          
-          node.todos[index].checked = !node.todos[index].checked;
-          node.todos[index].timestamp = Date.now();
-          
-          // Update data
-          currentData = {
-            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
-            links: currentData.links
-          };
-          
-          // Update display
-          updateTodoList(node);
-          saveDataToDiv();
-          render(); // Re-render to update unchecked task indicator
-        }
-
-        function updateTodoItemText(nodeId, index, text) {
-          if (nodeId === null) return;
-          
-          const node = currentData.nodes.find(n => n.id === nodeId);
-          if (!node || !node.todos || !node.todos[index]) return;
-          
-          node.todos[index].text = text;
-          node.todos[index].timestamp = Date.now();
-          
-          // Update data (but don't re-render display on every keystroke)
-          currentData = {
-            nodes: currentData.nodes.map(n => n.id === nodeId ? node : n),
-            links: currentData.links
-          };
-          
-          // Save but don't update display (already in sync)
-          saveDataToDiv();
-        }
-
         function deleteImage(imageIndex) {
           if (editingNodeId === null) return;
           
@@ -3965,6 +3899,8 @@
                   ),
                   links: currentData.links
                 };
+                // Sync connections based on node links in description
+                syncConnectionsFromDescription(newNodeId, description);
                 saveDataToDiv();
               }
             }
@@ -4093,6 +4029,37 @@
           return parts;
         }
 
+        function addTimestampsToCheckboxes(textarea) {
+          if (!textarea) return;
+          
+          const lines = textarea.value.split('\n');
+          let modified = false;
+          const timestamp = Date.now();
+          const newLines = [];
+          
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            // Check if line is a checkbox
+            const checkboxMatch = line.match(/^(\s*-\s*\[([ xX])\]\s+.+?)(\s*)$/);
+            // Check if it already has a timestamp
+            const hasTimestamp = line.indexOf('ts:') > -1;
+            
+            if (checkboxMatch && !hasTimestamp) {
+              // Add timestamp to this checkbox line
+              modified = true;
+              newLines.push(checkboxMatch[1] + ' &lt;!-- ts:' + timestamp + ' --&gt;' + checkboxMatch[3]);
+            } else {
+              newLines.push(line);
+            }
+          }
+          
+          if (modified) {
+            textarea.value = newLines.join('\n');
+            // Trigger the description update
+            updateNodeDescriptionOnInput({ target: textarea });
+          }
+        }
+
         function updateDescriptionPreview() {
           const textarea = document.getElementById("nodeDescriptionInput");
           const preview = document.getElementById("descriptionPreview");
@@ -4113,10 +4080,167 @@
             preview.style.display = 'block';
             preview.innerHTML = '';
             
-            // Convert URLs to links
-            const parts = convertUrlsToLinks(text);
-            parts.forEach(part => preview.appendChild(part));
+            // Parse markdown and convert to HTML
+            const lines = text.split('\n');
+            lines.forEach((line, index) => {
+              // Check for markdown checkbox syntax: - [ ] or - [x]
+              const checkboxMatch = line.match(/^(\s*)-\s*\[([ xX])\]\s*(.*)$/);
+              if (checkboxMatch) {
+                const indent = checkboxMatch[1];
+                const isChecked = checkboxMatch[2].toLowerCase() === 'x';
+                let content = checkboxMatch[3];
+                
+                // Extract timestamp from HTML comment if present: <!-- ts:1234567890 -->
+                let timestamp = null;
+                const timestampMatch = content.match(/<!--\s*ts:([0-9]+)\s*-->/);
+                if (timestampMatch) {
+                  timestamp = parseInt(timestampMatch[1]);
+                  // Remove the timestamp comment from display content
+                  content = content.replace(/<!--\s*ts:[0-9]+\s*-->/, '').trim();
+                }
+                
+                const container = document.createElement('div');
+                container.style.marginLeft = (indent.length * 8) + 'px';
+                container.style.display = 'flex';
+                container.style.alignItems = 'flex-start';
+                container.style.gap = '8px';
+                container.style.marginBottom = '4px';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = isChecked;
+                checkbox.style.marginTop = '3px';
+                checkbox.style.cursor = 'pointer';
+                checkbox.style.flexShrink = '0';
+                checkbox.style.width = '16px';
+                checkbox.style.height = '16px';
+                checkbox.style.minWidth = '16px';
+                checkbox.style.minHeight = '16px';
+                
+                // Update the text when checkbox is clicked
+                checkbox.addEventListener('change', (e) => {
+                  const newLines = textarea.value.split('\n');
+                  if (index < newLines.length) {
+                    const oldLine = newLines[index];
+                    const newTimestamp = Date.now();
+                    
+                    // Update checkbox state and timestamp
+                    let newLine = oldLine.replace(/\[([ xX])\]/, e.target.checked ? '[x]' : '[ ]');
+                    
+                    // Update or add timestamp
+                    if (/<!--\s*ts:[0-9]+\s*-->/.test(newLine)) {
+                      newLine = newLine.replace(/<!--\s*ts:[0-9]+\s*-->/, '<!-- ts:' + newTimestamp + ' -->');
+                    } else {
+                      // Add timestamp before the end of the line if not present
+                      newLine = newLine.replace(/^(\s*-\s*\[[xX ]\]\s*.+?)(\s*)$/, '$1 <!-- ts:' + newTimestamp + ' -->$2');
+                    }
+                    
+                    newLines[index] = newLine;
+                    textarea.value = newLines.join('\n');
+                    
+                    // Save the change
+                    updateNodeDescriptionOnInput({ target: textarea });
+                  }
+                });
+                
+                const contentWrapper = document.createElement('div');
+                contentWrapper.style.flex = '1';
+                contentWrapper.style.minWidth = '0';
+                contentWrapper.style.display = 'flex';
+                contentWrapper.style.flexDirection = 'column';
+                contentWrapper.style.gap = '4px';
+                
+                const textSpan = document.createElement('span');
+                textSpan.style.wordBreak = 'break-word';
+                if (isChecked) {
+                  textSpan.style.textDecoration = 'line-through';
+                  textSpan.style.opacity = '0.6';
+                }
+                
+                // Apply inline markdown formatting and convert URLs
+                const formattedContent = parseInlineMarkdown(content);
+                textSpan.innerHTML = formattedContent;
+                
+                contentWrapper.appendChild(textSpan);
+                
+                // Add timestamp if present
+                if (timestamp) {
+                  const timestampSpan = document.createElement('div');
+                  timestampSpan.style.fontSize = '10px';
+                  timestampSpan.style.color = '#808080';
+                  const date = new Date(timestamp);
+                  timestampSpan.textContent = date.toLocaleString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                  });
+                  contentWrapper.appendChild(timestampSpan);
+                }
+                
+                container.appendChild(checkbox);
+                container.appendChild(contentWrapper);
+                preview.appendChild(container);
+              } else {
+                // Regular line - apply inline markdown and URL conversion
+                const lineDiv = document.createElement('div');
+                if (line.trim() === '') {
+                  lineDiv.innerHTML = '&nbsp;'; // Preserve empty lines
+                } else {
+                  lineDiv.innerHTML = parseInlineMarkdown(line);
+                }
+                preview.appendChild(lineDiv);
+              }
+            });
+            
+            // Add click handlers for node links after preview is rendered
+            const nodeLinks = preview.querySelectorAll('.node-link');
+            nodeLinks.forEach(link => {
+              link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetNodeId = parseInt(link.getAttribute('data-node-id'));
+                if (targetNodeId) {
+                  // Connection is already created by markdown link, just navigate
+                  // Open the fly-in panel for the target node
+                  openFlyInPanel(targetNodeId);
+                }
+              });
+            });
           }
+        }
+        
+        function parseInlineMarkdown(text) {
+          // Convert node links [[NodeTitle|nodeId]] first
+          let html = text.replace(/\[\[([^\]|]+)\|(\d+)\]\]/g, (match, title, nodeId) => {
+            // Find the node to verify it exists
+            const node = currentData.nodes.find(n => n.id == nodeId);
+            if (node) {
+              return `<a href="#" data-node-id="${nodeId}" class="node-link" style="color: #4f8cff; text-decoration: underline; cursor: pointer;">${title}</a>`;
+            } else {
+              // Node doesn't exist, show as plain text with indication
+              return `<span style="color: #ff6b6b; text-decoration: line-through;">${title}</span>`;
+            }
+          });
+          
+          // Convert URLs to clickable links
+          const urlRegex = /(https?:\/\/[^\s]+)/g;
+          html = html.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+          
+          // Convert markdown links [text](url)
+          html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+          
+          // Convert **bold**
+          html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          
+          // Convert *italic* (but not if already part of **)
+          html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+          
+          // Convert `code`
+          html = html.replace(/`([^`]+)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>');
+          
+          return html;
         }
 
         function updateColorSwatches() {
@@ -4180,6 +4304,49 @@
           saveDataToDiv();
         }
 
+        function extractNodeLinksFromDescription(description) {
+          // Extract all node IDs from [[NodeTitle|nodeId]] patterns
+          const nodeIds = [];
+          const regex = /\[\[([^\]|]+)\|(\d+)\]\]/g;
+          let match;
+          
+          while ((match = regex.exec(description)) !== null) {
+            const nodeId = parseInt(match[2]);
+            // Verify the node exists
+            if (currentData.nodes.find(n => n.id === nodeId)) {
+              nodeIds.push(nodeId);
+            }
+          }
+          
+          return nodeIds;
+        }
+
+        function syncConnectionsFromDescription(sourceNodeId, description) {
+          // Get all node IDs referenced in the description
+          const referencedNodeIds = extractNodeLinksFromDescription(description);
+          
+          // Create connections for all referenced nodes
+          referencedNodeIds.forEach(targetNodeId => {
+            if (sourceNodeId !== targetNodeId) {
+              // Check if link already exists
+              const linkExists = currentData.links.some(l => 
+                (l.source === sourceNodeId && l.target === targetNodeId) ||
+                (l.source === targetNodeId && l.target === sourceNodeId)
+              );
+              
+              // Create link if it doesn't exist
+              if (!linkExists) {
+                currentData.links.push({
+                  source: sourceNodeId,
+                  target: targetNodeId,
+                  weight: 1,
+                  controlPoints: []
+                });
+              }
+            }
+          });
+        }
+
         function updateNodeDescriptionOnInput(event) {
           const textarea = event.target;
           if (!textarea) return;
@@ -4209,9 +4376,15 @@
             ),
             links: currentData.links
           };
+          
+          // Sync connections based on node links in description
+          syncConnectionsFromDescription(editingNodeId, newDescription);
 
           render();
           saveDataToDiv();
+          
+          // Update connected nodes list to show new connections
+          updateConnectedNodes(editingNodeId);
         }
 
         // Panning functions
