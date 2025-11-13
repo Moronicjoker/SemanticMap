@@ -398,15 +398,76 @@
         line-height: 1.5;
       }
 
-      .color-input-wrapper {
+      /* Title with color indicator */
+      .title-input-wrapper {
         display: flex;
         gap: 8px;
         align-items: center;
       }
 
-      .color-input-wrapper input[type="color"] {
-        width: 60px;
+      .title-input-wrapper input[type="text"] {
+        flex: 1;
+      }
+
+      .current-color-indicator {
+        width: 40px;
         height: 40px;
+        border-radius: 3px;
+        border: 2px solid #404040;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        position: relative;
+      }
+
+      .current-color-indicator:hover {
+        border-color: var(--primary);
+        transform: scale(1.05);
+      }
+
+      /* Color picker dropdown */
+      .color-picker-dropdown {
+        position: fixed;
+        z-index: 1000;
+        background: #1e1e1e;
+        border: 1px solid #404040;
+        border-radius: 6px;
+        padding: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        display: none;
+        width: 280px;
+      }
+
+      .color-picker-dropdown.open {
+        display: block;
+      }
+
+      .color-picker-section {
+        margin-bottom: 12px;
+      }
+
+      .color-picker-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .color-picker-section label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .color-picker-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .color-picker-controls input[type="color"] {
+        width: 50px;
+        height: 36px;
         border: 1px solid #404040;
         border-radius: 3px;
         cursor: pointer;
@@ -414,9 +475,9 @@
         padding: 2px;
       }
 
-      .color-input-wrapper input[type="text"] {
+      .color-picker-controls input[type="text"] {
         flex: 1;
-        padding: 10px 12px;
+        padding: 8px 10px;
         background: #2a2a2a;
         border: 1px solid #404040;
         border-radius: 3px;
@@ -426,7 +487,7 @@
         box-sizing: border-box;
       }
 
-      .color-input-wrapper input[type="text"]:focus {
+      .color-picker-controls input[type="text"]:focus {
         outline: none;
         border-color: var(--primary);
       }
@@ -435,11 +496,22 @@
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        margin-top: 8px;
         padding: 8px;
-        background: #1e1e1e;
+        background: #2a2a2a;
         border-radius: 3px;
-        min-height: 32px;
+        min-height: 40px;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+
+      .color-swatches:empty::after {
+        content: 'No custom colors yet';
+        color: var(--muted);
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
       }
 
       .color-swatch {
@@ -1057,7 +1129,10 @@
         <div class="fly-in-panel-content">
           <div class="fly-in-panel-field">
             <label for="nodeTitleInput">Title</label>
-            <input type="text" id="nodeTitleInput" placeholder="Enter node title" />
+            <div class="title-input-wrapper">
+              <input type="text" id="nodeTitleInput" placeholder="Enter node title" />
+              <div id="currentColorIndicator" class="current-color-indicator" title="Click to change color"></div>
+            </div>
             <div id="titleDuplicateWarning" class="title-duplicate-warning" style="display: none;">
               This title already exists
             </div>
@@ -1080,15 +1155,23 @@
             <label>Connected Nodes</label>
             <div id="connectedNodes" class="connected-nodes"></div>
           </div>
-          <div class="fly-in-panel-field">
-            <label for="nodeColorInput">Color</label>
-            <div class="color-input-wrapper">
-              <input type="color" id="nodeColorInput" value="#6a6a6a" />
-              <input type="text" id="nodeColorHexInput" placeholder="#6a6a6a" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" />
-            </div>
-            <div id="colorSwatches" class="color-swatches"></div>
+        </div>
+      </div>
+      
+      <!-- Color picker dropdown -->
+      <div id="colorPickerDropdown" class="color-picker-dropdown">
+        <div class="color-picker-section">
+          <label>Pick Color</label>
+          <div class="color-picker-controls">
+            <input type="color" id="nodeColorInput" value="#6a6a6a" />
+            <input type="text" id="nodeColorHexInput" placeholder="#6a6a6a" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" />
           </div>
         </div>
+        <div class="color-picker-section">
+          <label>Recently Used</label>
+          <div id="colorSwatches" class="color-swatches"></div>
+        </div>
+      </div>
       
       <!-- Context menu for image thumbnails -->
       <div id="imageContextMenu" class="image-context-menu">
@@ -1504,15 +1587,85 @@
               });
             }
 
-            // Handle color inputs
+            // Handle color inputs and dropdown
             const colorInput = document.getElementById("nodeColorInput");
             const colorHexInput = document.getElementById("nodeColorHexInput");
+            const colorIndicator = document.getElementById("currentColorIndicator");
+            const colorPickerDropdown = document.getElementById("colorPickerDropdown");
             
-            if (colorInput && colorHexInput) {
+            if (colorInput && colorHexInput && colorIndicator && colorPickerDropdown) {
+              // Function to update color indicator
+              const updateColorIndicator = (color) => {
+                colorIndicator.style.backgroundColor = color;
+              };
+              
+              // Toggle dropdown when clicking color indicator
+              colorIndicator.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const isOpen = colorPickerDropdown.classList.contains("open");
+                
+                if (isOpen) {
+                  colorPickerDropdown.classList.remove("open");
+                } else {
+                  // Show dropdown temporarily to get dimensions
+                  colorPickerDropdown.style.visibility = 'hidden';
+                  colorPickerDropdown.classList.add("open");
+                  
+                  // Position dropdown near the color indicator (after a frame to ensure dimensions are calculated)
+                  requestAnimationFrame(() => {
+                    const rect = colorIndicator.getBoundingClientRect();
+                    const dropdownWidth = 280; // Fixed width from CSS
+                    const dropdownHeight = colorPickerDropdown.offsetHeight;
+                    
+                    // Position to the left of the indicator by default
+                    let left = rect.left - dropdownWidth - 8;
+                    let top = rect.top;
+                    
+                    // If dropdown would go off left edge, position to the right
+                    if (left < 8) {
+                      left = rect.right + 8;
+                    }
+                    
+                    // If dropdown would still go off right edge, align to the right edge of screen
+                    if (left + dropdownWidth > window.innerWidth - 8) {
+                      left = window.innerWidth - dropdownWidth - 8;
+                    }
+                    
+                    // Ensure it doesn't go off left edge
+                    if (left < 8) {
+                      left = 8;
+                    }
+                    
+                    // If dropdown would go off bottom, position above the indicator
+                    if (top + dropdownHeight > window.innerHeight - 8) {
+                      top = Math.max(8, rect.bottom - dropdownHeight);
+                    }
+                    
+                    // Ensure it doesn't go off top edge
+                    if (top < 8) {
+                      top = 8;
+                    }
+                    
+                    colorPickerDropdown.style.left = `${left}px`;
+                    colorPickerDropdown.style.top = `${top}px`;
+                    colorPickerDropdown.style.visibility = 'visible';
+                  });
+                }
+              });
+              
+              // Close dropdown when clicking outside
+              document.addEventListener("click", (e) => {
+                if (!colorPickerDropdown.contains(e.target) && e.target !== colorIndicator) {
+                  colorPickerDropdown.classList.remove("open");
+                }
+              });
+              
               // Sync color picker with hex input (real-time visual update)
               colorInput.addEventListener("input", (e) => {
-                colorHexInput.value = e.target.value.toUpperCase();
-                updateNodeColor(e.target.value, false); // false = don't add to palette yet
+                const color = e.target.value.toUpperCase();
+                colorHexInput.value = color;
+                updateColorIndicator(color);
+                updateNodeColor(color, false); // false = don't add to palette yet
               });
               
               // Add to palette only when user finishes selecting color
@@ -1526,6 +1679,7 @@
                 // Validate hex color
                 if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) {
                   colorInput.value = hex;
+                  updateColorIndicator(hex);
                   updateNodeColor(hex, true); // Add to palette when typing hex manually
                 }
               });
@@ -3482,9 +3636,11 @@
             // Load color
             const colorInput = document.getElementById("nodeColorInput");
             const colorHexInput = document.getElementById("nodeColorHexInput");
+            const colorIndicator = document.getElementById("currentColorIndicator");
             const nodeColor = node.color || "#6a6a6a";
             if (colorInput) colorInput.value = nodeColor;
             if (colorHexInput) colorHexInput.value = nodeColor.toUpperCase();
+            if (colorIndicator) colorIndicator.style.backgroundColor = nodeColor;
             
             // Update color swatches
             updateColorSwatches();
@@ -3561,9 +3717,11 @@
           // Set default color for new node
           const colorInput = document.getElementById("nodeColorInput");
           const colorHexInput = document.getElementById("nodeColorHexInput");
+          const colorIndicator = document.getElementById("currentColorIndicator");
           const defaultColor = "#6a6a6a";
           if (colorInput) colorInput.value = defaultColor;
           if (colorHexInput) colorHexInput.value = defaultColor;
+          if (colorIndicator) colorIndicator.style.backgroundColor = defaultColor;
           
           // Update color swatches
           updateColorSwatches();
@@ -3593,11 +3751,15 @@
             updateDescriptionPreview();
           }
           
-          // Reset color inputs
+          // Reset color inputs and close dropdown
           const colorInput = document.getElementById("nodeColorInput");
           const colorHexInput = document.getElementById("nodeColorHexInput");
+          const colorIndicator = document.getElementById("currentColorIndicator");
+          const colorPickerDropdown = document.getElementById("colorPickerDropdown");
           if (colorInput) colorInput.value = "#6a6a6a";
           if (colorHexInput) colorHexInput.value = "#6a6a6a";
+          if (colorIndicator) colorIndicator.style.backgroundColor = "#6a6a6a";
+          if (colorPickerDropdown) colorPickerDropdown.classList.remove("open");
           
           if (warningEl) {
             warningEl.style.display = "none";
@@ -4357,9 +4519,11 @@
             swatch.addEventListener("click", () => {
               const colorInput = document.getElementById("nodeColorInput");
               const colorHexInput = document.getElementById("nodeColorHexInput");
+              const colorIndicator = document.getElementById("currentColorIndicator");
               
               if (colorInput) colorInput.value = color;
               if (colorHexInput) colorHexInput.value = color.toUpperCase();
+              if (colorIndicator) colorIndicator.style.backgroundColor = color;
               
               updateNodeColor(color);
             });
