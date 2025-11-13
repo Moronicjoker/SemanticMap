@@ -3793,6 +3793,9 @@
                 !(link.target === nodeId && link.source === connectedNodeId)
               );
               
+              // Remove the markdown link from the description
+              removeNodeLinkFromDescription(nodeId, connectedNodeId);
+              
               // Update the visualization
               render();
               saveDataToDiv();
@@ -3803,7 +3806,17 @@
             
             // Text element click handler: zoom to node and open fly-in panel
             textElement.addEventListener("click", () => {
+              // Clear current selection and select the target node
+              selectedNodeIds.clear();
+              selectedNodeIds.add(connectedNodeId);
+              
+              // Zoom to and focus on the target node
               zoomToNode(connectedNodeId);
+              
+              // Re-render to show selection
+              render();
+              
+              // Open the fly-in panel for the target node
               openFlyInPanel(connectedNodeId);
             });
             
@@ -3933,14 +3946,16 @@
             if (description && newNodeId) {
               const newNode = currentData.nodes.find(n => n.id === newNodeId);
               if (newNode) {
+                // Sync connections based on node links in description BEFORE updating currentData
+                syncConnectionsFromDescription(newNodeId, description);
+                
                 currentData = {
                   nodes: currentData.nodes.map(n => 
                     n.id === newNodeId ? { ...n, description: description } : n
                   ),
                   links: currentData.links
                 };
-                // Sync connections based on node links in description
-                syncConnectionsFromDescription(newNodeId, description);
+                render(); // Re-render to show connections
                 saveDataToDiv();
               }
             }
@@ -3951,6 +3966,10 @@
             const newNode = currentData.nodes.find(n => n.id === newNodeId);
             if (newNode) {
               updateImageThumbnails(newNode);
+            }
+            // Update connected nodes list to show new connections
+            if (description) {
+              updateConnectedNodes(newNodeId);
             }
             creatingNodeAt = null; // Clear creation flag
             return;
@@ -4242,6 +4261,16 @@
                 e.preventDefault();
                 const targetNodeId = parseInt(link.getAttribute('data-node-id'));
                 if (targetNodeId) {
+                  // Clear current selection and select the target node
+                  selectedNodeIds.clear();
+                  selectedNodeIds.add(targetNodeId);
+                  
+                  // Zoom to and focus on the target node
+                  zoomToNode(targetNodeId);
+                  
+                  // Re-render to show selection
+                  render();
+                  
                   // Connection is already created by markdown link, just navigate
                   // Open the fly-in panel for the target node
                   openFlyInPanel(targetNodeId);
@@ -4361,11 +4390,27 @@
           return nodeIds;
         }
 
-        function syncConnectionsFromDescription(sourceNodeId, description) {
-          // Get all node IDs referenced in the description
+        function syncConnectionsFromDescription(sourceNodeId, description, previousDescription = null) {
+          // Get all node IDs referenced in the new description
           const referencedNodeIds = extractNodeLinksFromDescription(description);
           
-          // Create connections for all referenced nodes
+          // If we have a previous description, detect removed links
+          if (previousDescription !== null) {
+            const previousReferencedIds = extractNodeLinksFromDescription(previousDescription);
+            
+            // Find IDs that were in previous description but not in current
+            const removedIds = previousReferencedIds.filter(id => !referencedNodeIds.includes(id));
+            
+            // Remove connections for markdown links that were explicitly deleted
+            removedIds.forEach(targetNodeId => {
+              currentData.links = currentData.links.filter(link => 
+                !(link.source === sourceNodeId && link.target === targetNodeId) &&
+                !(link.target === sourceNodeId && link.source === targetNodeId)
+              );
+            });
+          }
+          
+          // Add connections for referenced nodes
           referencedNodeIds.forEach(targetNodeId => {
             if (sourceNodeId !== targetNodeId) {
               // Check if link already exists
@@ -4385,6 +4430,43 @@
               }
             }
           });
+        }
+        
+        function removeNodeLinkFromDescription(sourceNodeId, targetNodeId) {
+          // Get the node
+          const node = currentData.nodes.find(n => n.id === sourceNodeId);
+          if (!node || !node.description) return false;
+          
+          // Get target node title for matching
+          const targetNode = currentData.nodes.find(n => n.id === targetNodeId);
+          if (!targetNode) return false;
+          
+          // Remove the markdown link [[NodeTitle|nodeId]] from description
+          // The regex matches [[any text|targetNodeId]]
+          const regex = new RegExp(`\\[\\[[^\\]|]*\\|${targetNodeId}\\]\\]`, 'g');
+          let newDescription = node.description.replace(regex, '');
+          
+          // Clean up potential double spaces left after removal
+          newDescription = newDescription.replace(/  +/g, ' ');
+          
+          // Update the node description
+          currentData = {
+            nodes: currentData.nodes.map(n => 
+              n.id === sourceNodeId ? { ...n, description: newDescription } : n
+            ),
+            links: currentData.links
+          };
+          
+          // Update the textarea if the node is being edited
+          if (editingNodeId === sourceNodeId) {
+            const descriptionInput = document.getElementById("nodeDescriptionInput");
+            if (descriptionInput) {
+              descriptionInput.value = newDescription;
+              updateDescriptionPreview();
+            }
+          }
+          
+          return true;
         }
 
         function updateNodeDescriptionOnInput(event) {
@@ -4409,6 +4491,11 @@
           const node = currentData.nodes.find(n => n.id === editingNodeId);
           if (!node) return;
 
+          // Sync connections based on node links in description BEFORE updating currentData
+          // Pass previous description to detect removed links
+          const previousDescription = node.description || "";
+          syncConnectionsFromDescription(editingNodeId, newDescription, previousDescription);
+          
           // Update node description
           currentData = {
             nodes: currentData.nodes.map(n => 
@@ -4416,9 +4503,6 @@
             ),
             links: currentData.links
           };
-          
-          // Sync connections based on node links in description
-          syncConnectionsFromDescription(editingNodeId, newDescription);
 
           render();
           saveDataToDiv();
