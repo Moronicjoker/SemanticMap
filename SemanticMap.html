@@ -2011,6 +2011,19 @@
           const matchingNodes = currentData.nodes.filter(node => {
             const queryLower = searchQuery.toLowerCase();
             
+            // Special case: #todo searches for nodes with unchecked todos
+            if (queryLower === '#todo') {
+              if (node.description) {
+                const descriptionLines = node.description.split('\n');
+                const hasUncheckedTodos = descriptionLines.some(line => {
+                  // Match markdown checkbox syntax: - [ ] (unchecked)
+                  return /^\s*-\s*\[\s\]\s*.+/.test(line);
+                });
+                if (hasUncheckedTodos) return true;
+              }
+              return false;
+            }
+            
             // Check title
             const nodeTitle = (node.title || "").toLowerCase();
             if (nodeTitle.includes(queryLower)) return true;
@@ -2577,19 +2590,33 @@
               const queryLower = searchQuery.toLowerCase();
               let matches = false;
               
-              // Check title
-              const nodeTitle = node.title || "";
-              const nodeTitleLower = nodeTitle.toLowerCase();
-              if (nodeTitleLower.includes(queryLower)) {
-                matches = true;
-              }
-              
-              // Check description
-              if (!matches) {
-                const nodeDescription = node.description || "";
-                const nodeDescriptionLower = nodeDescription.toLowerCase();
-                if (nodeDescriptionLower.includes(queryLower)) {
+              // Special case: #todo searches for nodes with unchecked todos
+              if (queryLower === '#todo') {
+                if (node.description) {
+                  const descriptionLines = node.description.split('\n');
+                  const hasUncheckedTodos = descriptionLines.some(line => {
+                    // Match markdown checkbox syntax: - [ ] (unchecked)
+                    return /^\s*-\s*\[\s\]\s*.+/.test(line);
+                  });
+                  if (hasUncheckedTodos) {
+                    matches = true;
+                  }
+                }
+              } else {
+                // Check title
+                const nodeTitle = node.title || "";
+                const nodeTitleLower = nodeTitle.toLowerCase();
+                if (nodeTitleLower.includes(queryLower)) {
                   matches = true;
+                }
+                
+                // Check description
+                if (!matches) {
+                  const nodeDescription = node.description || "";
+                  const nodeDescriptionLower = nodeDescription.toLowerCase();
+                  if (nodeDescriptionLower.includes(queryLower)) {
+                    matches = true;
+                  }
                 }
               }
               
