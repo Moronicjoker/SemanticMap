@@ -1833,7 +1833,7 @@
 
           // Use the same zoom calculation as search results for a single node
           // Create a bounding box around the node (same logic as zoomToSearchResults)
-          const nodeRadius = 14;
+          const nodeRadius = 19; // Use maximum node radius for zoom calculations
           const padding = 40;
           const minX = nodeX - nodeRadius - padding;
           const minY = nodeY - nodeRadius - padding;
@@ -1909,7 +1909,7 @@
           
           // Calculate bounding box
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          const nodeRadius = 14; // Radius of node circle
+          const nodeRadius = 19; // Use maximum node radius for zoom calculations
           const padding = 40; // Extra padding around nodes
           
           positions.forEach(p => {
@@ -2045,7 +2045,7 @@
           
           // Calculate bounding box
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          const nodeRadius = 14; // Radius of node circle
+          const nodeRadius = 19; // Use maximum node radius for zoom calculations
           const padding = 40; // Extra padding around nodes
           
           positions.forEach(p => {
@@ -2424,6 +2424,24 @@
             idToPosition.set(node.id, { x, y });
           });
 
+          // Calculate number of connections for each node
+          const nodeConnectionCount = new Map();
+          currentData.nodes.forEach(node => {
+            nodeConnectionCount.set(node.id, 0);
+          });
+          (currentData.links || []).forEach(link => {
+            nodeConnectionCount.set(link.source, (nodeConnectionCount.get(link.source) || 0) + 1);
+            nodeConnectionCount.set(link.target, (nodeConnectionCount.get(link.target) || 0) + 1);
+          });
+
+          // Function to get node radius based on connection count
+          const getNodeRadius = (nodeId) => {
+            const connections = nodeConnectionCount.get(nodeId) || 0;
+            if (connections <= 2) return 9;   // 18px diameter
+            if (connections <= 5) return 14;  // 28px diameter
+            return 19;                        // 38px diameter
+          };
+
           const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
           edgesGroup.setAttribute("fill", "none");
 
@@ -2540,6 +2558,9 @@
             const p = idToPosition.get(node.id);
             if (!p) return;
 
+            // Get dynamic radius for this node
+            const nodeRadius = getNodeRadius(node.id);
+
             const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
             group.classList.add("node");
             group.setAttribute("data-id", node.id);
@@ -2591,10 +2612,10 @@
             if (node.backgroundImage) {
               const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
               image.setAttributeNS("http://www.w3.org/1999/xlink", "href", node.backgroundImage);
-              image.setAttribute("x", String(p.x - 13.5));
-              image.setAttribute("y", String(p.y - 13.5));
-              image.setAttribute("width", "27");
-              image.setAttribute("height", "27");
+              image.setAttribute("x", String(p.x - nodeRadius + 0.5));
+              image.setAttribute("y", String(p.y - nodeRadius + 0.5));
+              image.setAttribute("width", String(nodeRadius * 2 - 1));
+              image.setAttribute("height", String(nodeRadius * 2 - 1));
               image.setAttribute("clip-path", "url(#clip-circle-" + node.id + ")");
               image.setAttribute("preserveAspectRatio", "xMidYMid slice");
               circleGroup.appendChild(image);
@@ -2603,7 +2624,7 @@
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("cx", String(p.x));
             circle.setAttribute("cy", String(p.y));
-            circle.setAttribute("r", "14");
+            circle.setAttribute("r", String(nodeRadius));
             
             // Create clip path for background image
             if (node.backgroundImage) {
@@ -2617,15 +2638,16 @@
                   const clipCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                   clipCircle.setAttribute("cx", String(p.x));
                   clipCircle.setAttribute("cy", String(p.y));
-                  clipCircle.setAttribute("r", "14");
+                  clipCircle.setAttribute("r", String(nodeRadius));
                   clipPath.appendChild(clipCircle);
                   defs.appendChild(clipPath);
                 } else {
-                  // Update existing clip path position
+                  // Update existing clip path position and radius
                   const clipCircle = clipPath.querySelector("circle");
                   if (clipCircle) {
                     clipCircle.setAttribute("cx", String(p.x));
                     clipCircle.setAttribute("cy", String(p.y));
+                    clipCircle.setAttribute("r", String(nodeRadius));
                   }
                 }
               }
@@ -2672,8 +2694,8 @@
               if (hasUncheckedTodos) {
                 const indicator = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 indicator.classList.add("task-indicator");
-                indicator.setAttribute("cx", String(p.x + 10));
-                indicator.setAttribute("cy", String(p.y - 10));
+                indicator.setAttribute("cx", String(p.x + nodeRadius * 0.71));
+                indicator.setAttribute("cy", String(p.y - nodeRadius * 0.71));
                 indicator.setAttribute("r", "5");
                 indicator.setAttribute("fill", "#ff3333");
                 indicator.setAttribute("stroke", "#101010ff");
@@ -2686,7 +2708,7 @@
 
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
             label.setAttribute("x", String(p.x));
-            label.setAttribute("y", String(p.y + 36));
+            label.setAttribute("y", String(p.y + nodeRadius + 22));
             label.setAttribute("text-anchor", "middle");
             label.setAttribute("font-family", "Inter, system-ui, sans-serif");
             label.setAttribute("font-size", "14");
@@ -3048,7 +3070,6 @@
             // determine target under pointer by checking distance to node centers
             const p = getSvgPoint(svg, event);
             if (p) {
-              const nodeRadius = 14;
               let closestNodeId = null;
               let minDist = Infinity;
               
@@ -3061,6 +3082,24 @@
               const radius = Math.min(width, height) * 0.35;
               const nodeCount = currentData.nodes.length || 1;
               
+              // Calculate number of connections for each node
+              const nodeConnectionCount = new Map();
+              currentData.nodes.forEach(node => {
+                nodeConnectionCount.set(node.id, 0);
+              });
+              (currentData.links || []).forEach(link => {
+                nodeConnectionCount.set(link.source, (nodeConnectionCount.get(link.source) || 0) + 1);
+                nodeConnectionCount.set(link.target, (nodeConnectionCount.get(link.target) || 0) + 1);
+              });
+              
+              // Function to get node radius based on connection count
+              const getNodeRadius = (nodeId) => {
+                const connections = nodeConnectionCount.get(nodeId) || 0;
+                if (connections <= 2) return 9;   // 18px diameter
+                if (connections <= 5) return 14;  // 28px diameter
+                return 19;                        // 38px diameter
+              };
+              
               currentData.nodes.forEach(node => {
                 // calculate node position (same logic as render)
                 const nodeIndex = currentData.nodes.findIndex(n => n.id === node.id);
@@ -3069,6 +3108,7 @@
                 const x = hasFixed ? node.x : centerX + radius * Math.cos(angle);
                 const y = hasFixed ? node.y : centerY + radius * Math.sin(angle);
                 
+                const nodeRadius = getNodeRadius(node.id);
                 const dist = Math.sqrt((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y));
                 if (dist < nodeRadius && dist < minDist) {
                   minDist = dist;
