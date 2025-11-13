@@ -1,52 +1,247 @@
-This application is designed for visual knowledge management. Based on the provided requirements, here is a set of high-level user needs and corresponding user requirements, expressed without specific solution details like "SVG," "fly-in panel," or "28px diameter."
+Detailed Functional and Non-Functional Requirements for Semantic Map
 
-## 🚀 High-Level User Needs
+This document elaborates on the high-level requirements, providing granular details on core application functionality, visual specifications, and interaction patterns.
 
-The primary user needs revolve around the efficient and intuitive creation, organization, and connection of visual information.
+1. Node Management & Visuals
 
-* **Need for Visual Organization:** Users need a way to organize and view interconnected pieces of information in a non-linear, spatial format.
-* **Need for Information Capture:** Users need to capture different types of information—text, tasks, and media—within a single structure.
-* **Need for Relationship Mapping:** Users need to easily define and understand the relationships between different pieces of information.
-* **Need for Efficient Workflow:** Users need to manage their information and tasks quickly and efficiently using various interaction methods (mouse and keyboard).
-* **Need for Data Persistence and Retrieval:** Users need their work to be automatically saved and easily accessible.
+ID
 
----
+Requirement Detail
 
-## ✨ User Requirements (Solution-Free)
+Source
 
-### 1. Information Structuring & Representation
-* [cite_start]The system must allow the creation of distinct, fundamental units of information (nodes)[cite: 1].
-* [cite_start]The system must arrange these units in a circular, visual layout by default[cite: 1].
-* [cite_start]Users must be able to visually customize each unit (e.g., color, background image) for categorization and identity[cite: 4, 1].
-* [cite_start]Each unit must support a title, a detailed description, and attachment of multiple images/media[cite: 3, 4].
+R1.1
 
-### 2. Connection Management
-* [cite_start]The system must provide a clear mechanism to create and display bidirectional relationships (links) between any two information units[cite: 3, 4].
-* [cite_start]Relationships must remain stable and visually represented when units are repositioned[cite: 3].
+Creation & Editing: Nodes are created on a single click on the empty canvas. The Fly-in Panel (380px wide, 100% height, right-aligned) immediately opens for input. Editing nodes opens the same panel with the node's existing data loaded.
 
-### 3. Content and Task Management
-* [cite_start]Each information unit must support a checklist/to-do list feature with completion tracking[cite: 4].
-* [cite_start]The system must visually alert the user to incomplete tasks within an information unit[cite: 6].
-* [cite_start]Text descriptions must automatically recognize and link URLs for external access[cite: 3, 11].
+UR 3.3, 4.3, 6.1
 
-### 4. Interaction and Manipulation
-* [cite_start]Users must be able to reposition individual and multiple selected information units[cite: 1, 5].
-* [cite_start]The system must support methods for selecting multiple units, including toggling selection and area-based selection[cite: 5].
-* [cite_start]Users must have the ability to quickly duplicate an information unit[cite: 3, 9].
-* [cite_start]The application must support smooth navigation of the visual canvas, including zooming and panning[cite: 8].
-* [cite_start]Key operations must have intuitive keyboard shortcuts (e.g., for navigation, editing, and closing views)[cite: 8].
+R1.2
 
-### 5. Search and Retrieval
-* [cite_start]The system must support real-time searching and filtering of information units based on their title[cite: 8, 15].
-* [cite_start]Search results must visually highlight matching units and diminish the visibility of non-matching units[cite: 6, 15].
-* [cite_start]The system must provide a chronological view of all created information units for historical access[cite: 10, 16].
+Unique Title Validation: The Node Title field must enforce case-insensitive uniqueness across all nodes. A red warning message, "This title already exists", must be displayed on duplicate entry.
 
-### 6. Data Integrity and Persistence
-* [cite_start]All user work must be automatically and continuously saved without requiring a manual save action[cite: 10].
-* [cite_start]The system must ensure that all information units have a unique identifier[cite: 3, 20].
-* [cite_start]The system must alert the user if they attempt to create a duplicate title for an information unit[cite: 3, 11, 20].
-* [cite_start]The system must maintain data consistency, such as ensuring relationship links are removed when an information unit is deleted[cite: 20].
+UR 6.4.2
 
----
+R1.3
 
-Would you like me to elaborate on a specific area, such as the requirements for **Content and Task Management**, or perhaps focus on the **Technical Constraints**?
+Dynamic Sizing: Node radius must dynamically adjust based on the count of existing connections: 9px (0-2 connections), 14px (3-5 connections), and 19px (6+ connections).
+
+UR 4.1
+
+R1.4
+
+Node Copying: Holding Alt + Drag on a node must create a deep copy, inheriting all data (description, images, color), but assigning a new unique ID and appending " (COPY)" to the title.
+
+UR 4.5
+
+R1.5
+
+Task Indicator: A small red indicator (5px radius) must be visible on the node circle's top-right quadrant if the node's description contains any unchecked to-do items (- [ ]).
+
+UR 4.7
+
+R1.6
+
+Deletion Flow: Node deletion requires confirmation via the "Confirm Deletion" Modal Dialog. The warning must explicitly state, "All connections to this node will also be removed."
+
+UR 4.6, 14.1
+
+2. Connection and Path Manipulation
+
+ID
+
+Requirement Detail
+
+Source
+
+R2.1
+
+Creation Method: Connections are initiated by Shift + Click on the source node and completed by clicking the target node. Duplicate connections must be prevented.
+
+UR 5.1
+
+R2.2
+
+Line Color & Thickness: The connection line color must be inherited from the source node. Line width is 1px (default) or 2px (when a connected node is selected).
+
+UR 5.2
+
+R2.3
+
+Path Bending (Bezier): The connection must support up to 2 control points to create Quadratic or Cubic Bezier curves. Control points are only visible and interactive when one of the linked nodes is selected.
+
+UR 5.3.2
+
+R2.4
+
+Control Point Interaction: Control points are draggable (move cursor) and can be removed by double-clicking. They must move with the nodes if both connected nodes are dragged simultaneously.
+
+UR 5.3.1, 5.3.3
+
+R2.5
+
+Deletion: Connections must be deleted instantly upon double-clicking the line itself, without requiring confirmation.
+
+UR 5.4
+
+3. Rich Text, Markdown, and Linking
+
+ID
+
+Requirement Detail
+
+Source
+
+R3.1
+
+Interactive Checkboxes: Markdown to-do items (- [ ] task / - [x] task) must render as interactive HTML checkboxes in the preview mode.
+
+UR 11.1.2, 11.3
+
+R3.2
+
+Timestamping: When a to-do item's state is toggled (checked/unchecked) or the description field loses focus, an invisible timestamp (<!-- ts:123... -->) must be inserted/updated on that line. This timestamp is displayed in the preview as small muted text (MMM D, YYYY HH:MM).
+
+UR 11.2.2, 11.3.3
+
+R3.3
+
+Node Link Autocomplete: Typing [[ in the description field must trigger an autocomplete dropdown that filters nodes by title and allows selection using Arrow Keys and Enter. The resulting link format must be [[NodeTitle|nodeId]].
+
+UR 11.1.3, 11.4
+
+R3.4
+
+Broken Link Handling: Markdown node links where the target node ID no longer exists must be rendered in the preview with a red strikethrough.
+
+UR 11.1.3
+
+R3.5
+
+URL Autolinking: Standard URLs (http://, https://, www., common TLDs) must be automatically converted into clickable hyperlinks that open in a new tab.
+
+UR 11.2.1
+
+4. Canvas Interaction and Navigation
+
+ID
+
+Requirement Detail
+
+Source
+
+R4.1
+
+Panning: The map must pan smoothly and continuously when the Middle Mouse Button is held down and dragged.
+
+UR 3.2.1
+
+R4.2
+
+Zooming: Zoom must operate smoothly with the Mouse Wheel (range: 0.1x to 10x) and always center the zoom effect towards the current mouse cursor position.
+
+UR 3.2.2
+
+R4.3
+
+Box Selection: Clicking and dragging on the empty canvas must initiate a semi-transparent blue Box Selection rectangle. Nodes whose centers fall within this rectangle are selected. Shift + Drag adds to the existing selection.
+
+UR 3.3
+
+R4.4
+
+Show All/Framing: The "Show All" button must automatically calculate the bounding box of all existing nodes and pan/zoom the canvas to fit them, providing 40px padding around the content boundaries.
+
+UR 3.2.3, 7.5
+
+R4.5
+
+Search Highlighting: Search results must visually categorize nodes: Highlighted State (full opacity, 3px white stroke) for matches, and Dimmed State (0.3 opacity, dimmed fill/text) for non-matches.
+
+UR 4.2.3, 4.2.4, 7.3
+
+R4.6
+
+Search to Frame: Upon completion of a search (if results exist), the map view must automatically zoom and pan to fit all matching nodes within the viewport.
+
+UR 3.2.3, 7.2.1
+
+R4.7
+
+Special Search: The search query #todo must specifically filter and highlight only those nodes containing unchecked to-do items (- [ ]).
+
+UR 7.2.2
+
+5. Image and Asset Management
+
+ID
+
+Requirement Detail
+
+Source
+
+R5.1
+
+Upload Methods: Images must be uploadable via Drag & Drop, File Picker (on drop zone click), and directly via Paste from Clipboard (when the edit panel is open).
+
+UR 10.2
+
+R5.2
+
+Image Persistence: All images must be stored within the node object using Base64 encoding and be deep-copied upon node duplication.
+
+UR 10.3
+
+R5.3
+
+Image Context Menu: Right-clicking an image thumbnail must open a context menu with options to "Set as Background" or "Delete" the image.
+
+UR 10.5
+
+R5.4
+
+Background Image Display: One image per node can be set as the backgroundImage and must be displayed clipped within the node's circular boundary.
+
+UR 4.1, 10.7
+
+R5.5
+
+Image Viewer Modal: Clicking a thumbnail opens a full-screen modal viewer (80% viewport size) that supports Arrow Key navigation (wrapping to first/last image) and includes a dedicated area for adding/editing image-specific comments.
+
+UR 10.6
+
+6. Persistence, Export, and Timeline
+
+ID
+
+Requirement Detail
+
+Source
+
+R6.1
+
+Timeline Sorting: The Timeline Bar (80px high, bottom of viewport) must display nodes sorted chronologically by their creation ID (timestamp, ascending), with the oldest node on the left.
+
+UR 9.3, 9.4
+
+R6.2
+
+Timeline Navigation: Clicking a timeline entry must automatically zoom to the corresponding node, select it, and open its edit panel.
+
+UR 3.2.3, 9.3.3
+
+R6.3
+
+Auto-Save Mechanism: Data must be automatically saved to the hidden contenteditable storage div (#semanticMapData) on every significant change (node move, title change, link change, etc.).
+
+UR 8.3, 15.3
+
+R6.4
+
+Save Warning: A browser warning must be triggered before the user attempts to leave the page if the map contains any nodes (indicating unsaved data).
+
+UR 8.4
+
+R6.5
+
+SVG Export: The "Download SVG" button must generate and download a self-contained SVG file that represents the map's current visual state (including current zoom/pan) with a filename format: {MapName}_{YYYY-MM-DD_HH-MM-SS}.svg.

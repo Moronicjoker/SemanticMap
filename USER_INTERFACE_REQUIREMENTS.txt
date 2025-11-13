@@ -1,450 +1,1227 @@
-================================================================================
-                    SEMANTIC MAP APPLICATION
-                   USER NEEDS & REQUIREMENTS
-================================================================================
-
-PROJECT OVERVIEW
-================================================================================
-A visual knowledge management application that allows users to create, organize,
-and connect information nodes in a circular semantic map layout. The application
-provides an intuitive interface for managing interconnected ideas, tasks, and
-multimedia content.
-
-
-CORE FUNCTIONALITY
-================================================================================
-
-1. NODE MANAGEMENT
-   - Create nodes by clicking on the canvas background
-   - Edit node properties (title, description, color)
-   - Delete nodes with confirmation dialog
-   - Copy nodes using ALT+Drag (creates duplicate with "(COPY)" suffix)
-   - Nodes display in a circular layout by default
-   - Manually position nodes via drag and drop
-   - Each node has a unique timestamp-based ID
-
-2. NODE PROPERTIES
-   - Title: Text identifier for the node (with duplicate detection)
-   - Description: Rich text field with clickable URL detection
-   - Color: Customizable hex color with color picker and manual input
-   - Background Image: Optional image set from uploaded images
-   - Images: Multiple image attachments with comments
-   - Todos: Task list with checkbox completion tracking
-   - Creation timestamp: Automatic tracking
-
-3. CONNECTION MANAGEMENT
-   - Create links between nodes using CTRL+Drag
-   - Visual representation with lines connecting node centers
-   - Bidirectional relationships
-   - Links maintained when nodes are moved
-
-4. SELECTION & MANIPULATION
-   - Single node selection: Click on node
-   - Multiple node selection: Shift+Click to toggle
-   - Box selection: Click and drag on canvas (with Shift for additive)
-   - Group dragging: Move multiple selected nodes together
-   - Visual feedback: White dashed stroke on selected nodes
-   - Clear selection: Click on canvas background
-
-
-VISUAL FEATURES
-================================================================================
-
-1. NODE VISUALIZATION
-   - Circular nodes (28px diameter)
-   - Customizable fill color
-   - Default stroke color (#3e3e3e)
-   - Background image support (clipped to circular shape)
-   - Text label below node (14px font)
-   - Search highlighting with white stroke
-   - Dimming for non-matching search results
-
-2. TASK INDICATOR
-   - Small red circle (10px diameter) at upper-right of node
-   - Displays when node has unchecked todos
-   - Black stroke (1.5px width)
-   - Does not inherit selection styling
-
-3. SELECTION FEEDBACK
-   - White dashed stroke (5, 3 pattern)
-   - 3px stroke width
-   - Applied to main node circle only
-
-4. COLOR MANAGEMENT
-   - Color picker input
-   - Hex code text input with validation
-   - Custom color swatches (auto-populated from used colors)
-   - Quick color selection from swatch palette
-   - Default color: #6a6a6a
-
-
-USER INTERACTIONS
-================================================================================
-
-1. MOUSE INTERACTIONS
-   - Left Click: Select node or create new node (on canvas)
-   - Left Drag: Move node
-   - CTRL+Drag: Create connection between nodes
-   - ALT+Drag: Copy node to new location
-   - Shift+Click: Toggle node selection
-   - Middle Mouse: Pan the canvas
-   - Right Click: Context menu on image thumbnails
-   - Double Click: (Reserved for future use)
-   - Box Selection: Click+Drag on canvas to select multiple nodes
-
-2. KEYBOARD SHORTCUTS
-   - Escape: Close fly-in panel or image modal
-   - Enter: (In todo input) Create new todo item
-   - Arrow Keys: Navigate between images in modal (Left/Right)
-   - Search: Real-time filtering of nodes by title
-
-3. ZOOM & PAN
-   - Mouse wheel: Zoom in/out (centered on mouse position)
-   - Middle mouse drag: Pan the canvas
-   - Zoom range: 0.1x to 5x
-   - Smooth zoom transitions
-
-4. NODE INTERACTION MODES
-   - Normal: Click to select, drag to move
-   - Connect: CTRL+Drag to create links
-   - Copy: ALT+Drag to duplicate
-   - Multi-select: Shift+Click or box selection
-
-
-DATA MANAGEMENT
-================================================================================
-
-1. PERSISTENCE
-   - Auto-save to hidden div (#semanticMapData)
-   - Data stored as JSON in data-nodes attribute
-   - Automatic save on any change
-   - No manual save required
-
-2. DATA STRUCTURE
-   - Nodes: Array of node objects with properties
-   - Links: Array of source-target relationships
-   - Node properties: id, title, description, color, x, y, images, 
-     backgroundImage, todos
-   - Image format: {data: base64, comment: string}
-   - Todo format: {text: string, checked: boolean, timestamp: number}
-
-3. BACKWARD COMPATIBILITY
-   - Handles legacy string-only image format
-   - Converts old node ID format (string) to new (number)
-   - Graceful migration on load
-
-4. TIMELINE
-   - Chronological list of all nodes by creation date (oldest first)
-   - Displays date (short month, day)
-   - Displays time (24-hour format, HH:MM)
-   - Click to zoom and open node editor
-
-
-FLY-IN PANEL (NODE EDITOR)
-================================================================================
-
-1. TITLE INPUT
-   - Text input with duplicate detection
-   - Visual warning for duplicate titles
-   - Auto-focus on panel open
-   - "Create Node" or "Edit Node" header
-
-2. DESCRIPTION EDITOR
-   - Textarea input with automatic preview mode
-   - Automatic URL detection and linking in preview
-   - Click URLs in preview to open in new tab
-   - Auto-switches to preview on blur, edit mode on focus
-   - Click preview to return to edit mode
-   - Initially shows preview if content exists, otherwise shows textarea
-
-3. COLOR SELECTOR
-   - Color picker (visual)
-   - Hex input field (text)
-   - Sync between picker and text input
-   - Custom color swatches below
-   - Clickable swatches for quick selection
-
-4. IMAGE MANAGEMENT
-   - Drag & drop zone for image upload
-   - Multiple image upload support
-   - Thumbnail gallery with previews
-   - Click thumbnail to view in modal
-   - Right-click context menu:
-     * Set as Background
-     * Delete image
-   - Clear background button (when background is set)
-   - Active indicator on background image thumbnail
-
-5. TODO LIST
-   - Add todo items with "+ Add Item" button
-   - Checkbox to mark complete/incomplete
-   - Text input (disabled when checked)
-   - Delete button (× symbol, appears on hover)
-   - Timestamp display below each todo (short month, day, year, HH:MM in 24-hour format)
-   - Timestamp updates on text change or check/uncheck
-   - Enter key creates new todo after current
-
-6. CONNECTED NODES
-   - Visual list of linked nodes
-   - Click to navigate to connected node
-   - Shows relationship structure
-
-7. DELETE BUTTON
-   - Visible only when editing existing node
-   - Opens confirmation modal
-   - Warning about link removal
-
-
-IMAGE MODAL
-================================================================================
-
-1. IMAGE DISPLAY
-   - Full-screen overlay (80vw × 80vh)
-   - Dark background (80% opacity)
-   - Image centered with contain fit
-   - Click outside to close
-   - Escape key to close
-
-2. NAVIGATION
-   - Left/Right arrow keys to navigate between images
-   - Circular navigation (wraps at ends)
-   - Keyboard disabled when typing in comment field
-
-3. COMMENT INPUT
-   - Textarea below image
-   - Placeholder: "Add a comment..."
-   - Auto-save on input
-   - Maintains comment when navigating images
-   - Click on comment area doesn't close modal
-   - Resizable vertically
-
-4. STYLING
-   - Flex column layout
-   - Image takes available space (flex: 1)
-   - Comment container fixed at bottom (flex-shrink: 0)
-   - Dark theme matching application
-
-
-SEARCH FUNCTIONALITY
-================================================================================
-
-1. SEARCH INPUT
-   - Top-left search bar
-   - Real-time filtering (no submit button)
-   - Matches against node titles (not IDs)
-   - Case-insensitive matching
-
-2. SEARCH RESULTS
-   - Matching nodes: White stroke (3px), full opacity
-   - Non-matching nodes: Dimmed (#666, 30% opacity)
-   - Labels also dimmed for non-matches
-   - Clear search restores normal view
-
-
-TIMELINE BAR
-================================================================================
-
-1. LAYOUT
-   - Fixed bottom bar spanning full width
-   - Dark background (#1a1a1a)
-   - Scrollable horizontally
-   - Auto-updates on node creation/deletion
-
-2. TIMELINE ENTRIES
-   - One entry per node (sorted by creation date, oldest first)
-   - Display format:
-     * Date (short month, day) - 10px font size
-     * Time (24-hour format, HH:MM) - 9px font size
-     * Title (or "Untitled") - 12px font size
-   - Hover effect for visibility
-   - Click to zoom/pan to node and open editor
-
-3. BEHAVIOR
-   - Clicking timeline entry:
-     * Selects the node
-     * Zooms and centers on node
-     * Opens fly-in panel for editing
-     * Shows white dashed selection stroke
-
-
-UI/UX REQUIREMENTS
-================================================================================
-
-1. VISUAL THEME
-   - Dark theme throughout
-   - Primary color: #4f8cff (blue)
-   - Surface color: #1e1e1e
-   - Text color: #e6e6e6
-   - Border color: #404040
-
-2. TYPOGRAPHY
-   - Font family: Inter, system-ui, sans-serif
-   - Node labels: 14px
-   - UI elements: 14px standard
-   - Timestamps: 10px (todos and timeline entries), gray color
-
-3. FEEDBACK & STATES
-   - Hover effects on interactive elements
-   - Cursor changes (grab, grabbing, pointer)
-   - Visual feedback for dragging
-   - Selection indicators (dashed stroke)
-   - Loading states handled gracefully
-
-4. RESPONSIVENESS
-   - SVG canvas adapts to window size
-   - Fly-in panel slides from right
-   - Modal overlays center on viewport
-   - Timeline spans full width
-
-5. ACCESSIBILITY
-   - Keyboard navigation support
-   - Clear visual indicators
-   - Tooltips on hover
-   - Error messages for invalid input
-
-
-TECHNICAL REQUIREMENTS
-================================================================================
-
-1. FILE FORMAT
-   - Single HTML file application
-   - Self-contained (no external dependencies)
-   - Pure JavaScript (no frameworks)
-   - SVG for node visualization
-   - Inline CSS
-
-2. BROWSER COMPATIBILITY
-   - Modern browser support (ES6+)
-   - SVG support required
-   - FileReader API for image upload
-   - localStorage not required (uses DOM storage)
-
-3. PERFORMANCE
-   - Efficient rendering on large graphs
-   - Smooth zoom/pan transitions
-   - Real-time search filtering
-   - Optimized re-rendering (preserves selection rectangle)
-
-4. DATA INTEGRITY
-   - Duplicate title warnings
-   - Unique node IDs (timestamp-based)
-   - Link cleanup on node deletion
-   - Validation for color inputs (hex format)
-
-5. IMAGE HANDLING
-   - Base64 encoding for storage
-   - Multiple formats supported (jpg, png, gif, webp)
-   - Circular clipping for background images
-   - Thumbnail generation for gallery
-   - Comment storage per image
-
-
-SECURITY & PRIVACY
-================================================================================
-
-1. DATA STORAGE
-   - Local storage only (no server communication)
-   - Data embedded in HTML file
-   - No external API calls
-   - URLs open in new tab with proper security
-
-2. INPUT VALIDATION
-   - Hex color validation (regex)
-   - Image format validation
-   - Title duplicate checking
-   - Safe URL rendering
-
-
-FUTURE ENHANCEMENTS (Implicit Requirements)
-================================================================================
-
-1. Export/Import
-   - Export as JSON
-   - Import from file
-   - Backup functionality
-
-2. Collaboration
-   - Multi-user support
-   - Real-time sync
-   - Version control
-
-3. Advanced Features
-   - Node grouping/categories
-   - Custom node shapes
-   - Link labels
-   - Hierarchical layouts
-   - Markdown support in descriptions
-   - Full-text search (descriptions & todos)
-
-4. Performance
-   - Virtual rendering for large datasets
-   - Lazy loading of images
-   - Undo/redo functionality
-
-
-USER WORKFLOW EXAMPLES
-================================================================================
-
-1. CREATE NEW SEMANTIC MAP
-   - Open application in browser
-   - Click on canvas to create first node
-   - Enter title in fly-in panel
-   - Add description, color, images as needed
-   - Click canvas to create more nodes
-   - CTRL+Drag to connect related nodes
-
-2. ORGANIZE EXISTING NODES
-   - Search for specific nodes
-   - Select multiple nodes (Shift+Click or box selection)
-   - Drag group to new position
-   - Adjust colors to categorize
-   - Add background images for visual identity
-
-3. MANAGE TASKS
-   - Open node in fly-in panel
-   - Add todo items
-   - Check off completed items
-   - Monitor red indicator for unchecked tasks
-   - View timestamps for task tracking
-
-4. WORK WITH IMAGES
-   - Drag images into upload zone
-   - Click thumbnail to view full size
-   - Add comments to images
-   - Set image as node background
-   - Navigate between images with arrows
-
-5. DUPLICATE WORKFLOW
-   - Find node to copy
-   - ALT+Drag to create copy
-   - Edit copied node title
-   - Adjust position and connections
-
-
-CONSTRAINTS & LIMITATIONS
-================================================================================
-
-1. TECHNICAL
-   - Client-side only (no backend)
-   - File size grows with images
-   - Browser memory limits for large maps
-   - No real-time collaboration
-
-2. FUNCTIONAL
-   - No undo/redo yet
-   - No export functionality
-   - Single map per file
-   - No nested nodes
-
-3. DESIGN
-   - Fixed circular node shape
-   - Fixed node size (14px radius)
-   - Linear link representation only
-
-
-================================================================================
-END OF REQUIREMENTS DOCUMENT
-================================================================================
-Last Updated: November 4, 2025
-Version: 1.0
+========================================================================
+SEMANTIC MAP - USER INTERFACE REQUIREMENTS DOCUMENT
+========================================================================
+
+Last Updated: November 13, 2025
+Application: SemanticMap.html
+Document Version: 1.0
+
+========================================================================
+TABLE OF CONTENTS
+========================================================================
+1. OVERVIEW
+2. VISUAL DESIGN SYSTEM
+3. MAIN CANVAS & MAP INTERACTION
+4. NODE MANAGEMENT
+5. CONNECTION (LINK) MANAGEMENT
+6. SIDE PANEL INTERFACE
+7. SEARCH & NAVIGATION
+8. FILE MANAGEMENT
+9. TIMELINE COMPONENT
+10. IMAGE MANAGEMENT
+11. MARKDOWN & TEXT FORMATTING
+12. COLOR PICKER INTERFACE
+13. KEYBOARD SHORTCUTS & INTERACTIONS
+14. MODAL DIALOGS
+15. DATA PERSISTENCE
+16. RESPONSIVE BEHAVIOR
+17. ACCESSIBILITY FEATURES
+
+========================================================================
+1. OVERVIEW
+========================================================================
+SemanticMap is a single-page web application for creating and managing
+visual semantic networks. It allows users to create nodes, connect them,
+annotate with text and images, and navigate through a spatial network
+of interconnected concepts.
+
+Technology Stack: Vanilla JavaScript, SVG, HTML5, CSS3
+Browser Support: Modern browsers (Chrome, Firefox, Safari, Edge)
+Persistence: Local storage via contenteditable div
+
+========================================================================
+2. VISUAL DESIGN SYSTEM
+========================================================================
+
+2.1 COLOR SCHEME
+----------------
+- Background: Dark theme with radial gradient (#1a1a1a to #1f1f1f)
+- Surface: #2a2a2a (cards, panels, inputs)
+- Text Primary: #e6e6e6
+- Text Muted: #a0a0a0
+- Primary Accent: #6a6a6a
+- Primary Pressed: #555555
+- Border Color: #404040
+- Canvas Background: #101010
+
+2.2 TYPOGRAPHY
+--------------
+- Font Family: System UI stack (system-ui, -apple-system, Segoe UI, 
+  Roboto, Ubuntu, Cantarell, etc.)
+- Base Color: #e6e6e6
+- Muted Color: #a0a0a0
+
+2.3 SPACING & LAYOUT
+--------------------
+- Border Radius: 12px (cards), 3px (inputs), 6px (buttons)
+- Standard Gap: 12px between elements
+- Spacer Height: 16px
+- Padding: 20px (cards), 10-14px (inputs/buttons)
+
+2.4 VISUAL EFFECTS
+------------------
+- Box Shadow: 0 10px 30px rgba(0,0,0,0.25) for elevated elements
+- Backdrop Filter: blur(8px) for overlay elements
+- Transition Duration: 120ms-300ms for interactive elements
+- Hover Effects: brightness(1.05) or opacity changes
+
+========================================================================
+3. MAIN CANVAS & MAP INTERACTION
+========================================================================
+
+3.1 SVG CANVAS
+--------------
+- Full viewport size (100% width and height)
+- Dark background (#101010)
+- Crosshair cursor by default
+- Preserves aspect ratio
+- Role: "img" for accessibility
+- Aria-label: "Semantic map canvas"
+
+3.2 VIEWPORT CONTROLS
+---------------------
+3.2.1 Panning
+- Middle mouse button drag to pan
+- Cursor changes to "grabbing" during pan
+- Smooth, continuous movement
+- Updates viewBox in real-time
+- No boundaries (infinite canvas)
+
+3.2.2 Zooming
+- Mouse wheel to zoom in/out
+- Zoom range: 0.1x to 10x
+- Zooms toward/away from mouse cursor position
+- Smooth zoom transitions
+- Preserves mouse-point relationship during zoom
+
+3.2.3 Auto-Framing
+- "Show All" button to frame all nodes
+- Automatic framing on initial load (if nodes exist)
+- Smart zoom to search results
+- Zoom to specific node when clicking timeline entry
+- 0.9x scaling factor for margin around framed content
+- 40px padding around node bounding boxes
+
+3.3 BACKGROUND INTERACTION
+--------------------------
+- Single click on empty canvas: Create new node at click position
+- Click and drag: Box selection (rectangle selection)
+- Shift + box selection: Add to existing selection
+- Selection rectangle: Semi-transparent blue (#4f8cff, 0.1 opacity)
+- Dashed stroke (1,3 pattern) for selection box
+- Click to deselect all nodes
+
+========================================================================
+4. NODE MANAGEMENT
+========================================================================
+
+4.1 NODE VISUAL PROPERTIES
+---------------------------
+- Circular nodes (SVG circles)
+- Dynamic sizing based on connection count:
+  * 0-2 connections: 9px radius (18px diameter)
+  * 3-5 connections: 14px radius (28px diameter)
+  * 6+ connections: 19px radius (38px diameter)
+- Default color: #6a6a6a
+- Custom colors supported (user-definable)
+- Text label below each node
+- Background image support (displayed within circle)
+
+4.2 NODE STATES
+---------------
+4.2.1 Default State
+- Solid fill with user-selected color
+- 1.5px white stroke
+- Label in white text below circle
+
+4.2.2 Selected State
+- White stroke (3px width)
+- Dashed stroke pattern (1,3)
+- Visible selection indicator
+- Multiple nodes can be selected simultaneously
+
+4.2.3 Highlighted State (Search Match)
+- White stroke (3px)
+- Full opacity
+- Visible while other non-matching nodes are dimmed
+
+4.2.4 Dimmed State (During Search)
+- 0.3 opacity for circle
+- 0.3 opacity for text
+- Fill color: #666
+- Text color: #999
+
+4.2.5 Dragging State
+- Cursor: "grabbing"
+- Real-time position updates
+- Smooth movement following mouse
+
+4.3 NODE CREATION
+-----------------
+- Click empty canvas to create node
+- Fly-in panel opens immediately
+- Node is created when user types title
+- Unique numeric ID assigned (timestamp-based)
+- Default color applied
+- Panel title: "Create Node"
+- Delete button hidden during creation
+
+4.4 NODE EDITING
+----------------
+- Click node to select and open edit panel
+- Drag node to reposition
+- Click tolerance: 5px (movement < 5px = click, not drag)
+- Panel opens on node click
+- Panel title: "Edit Node"
+- Delete button visible during editing
+
+4.5 NODE COPYING
+----------------
+- Alt + drag node to create copy
+- Copy appends " (COPY)" to title
+- Copy inherits all properties (color, description, images)
+- Deep copy of images array (no shared references)
+- New unique ID assigned
+- Copy starts at same position as original
+
+4.6 NODE DELETION
+-----------------
+- Delete button in edit panel
+- Confirmation modal required
+- Warning: "All connections to this node will also be removed"
+- Removes all associated links
+- Updates timeline
+- Closes edit panel after deletion
+
+4.7 TASK INDICATOR
+------------------
+- Small indicator on nodes with unchecked todos
+- Visible when node description contains "- [ ]" checkboxes
+- Helps identify nodes with pending tasks
+- Searchable with "#todo" query
+
+========================================================================
+5. CONNECTION (LINK) MANAGEMENT
+========================================================================
+
+5.1 CONNECTION CREATION
+-----------------------
+- Shift + click node to start connection mode
+- Temporary dashed line follows cursor
+- Line color: #888888
+- Stroke width: 2px
+- Dash pattern: "6 4"
+- Click target node to complete connection
+- Clicking same node cancels connection
+- Duplicate connections prevented
+
+5.2 CONNECTION VISUALIZATION
+-----------------------------
+- Straight or curved lines between nodes
+- Adaptive line thickness based on selection:
+  * Default: 1px stroke width
+  * Selected node connected: 2px stroke width
+  * Hovered (when selectable): 3px stroke width
+- Color inherited from source node
+- Opacity: 0.6 for non-selected connections
+- Pointer events: "none" for connection path itself
+
+5.3 CONNECTION BENDING
+----------------------
+5.3.1 Control Points
+- Click connection to add control point (max 2 per connection)
+- Only available when one connected node is selected
+- Visible as small circles (4px radius)
+- Color: #b0b0b0
+- Hover effect: radius increases to 6px, color #e0e0e0
+- Draggable with "move" cursor
+
+5.3.2 Bezier Curves
+- Straight line with 0 control points
+- Quadratic bezier with 1 control point
+- Cubic bezier with 2 control points
+- Smooth curves through control points
+- Control points move with connected nodes when both selected
+
+5.3.3 Control Point Management
+- Double-click control point to remove
+- Drag to reposition
+- Visual feedback on hover
+- Transition effects (0.2s ease)
+
+5.4 CONNECTION DELETION
+-----------------------
+- Double-click connection line to delete
+- No confirmation required
+- Updates both visual display and data
+- Removes control points automatically
+
+5.5 CONNECTION HIT AREA
+-----------------------
+- Invisible stroke (20px width) for easier clicking
+- Hover cursor: pointer
+- Triggers visual feedback on hover
+- Only interactive when connected node is selected
+
+========================================================================
+6. SIDE PANEL INTERFACE (FLY-IN PANEL)
+========================================================================
+
+6.1 PANEL STRUCTURE
+-------------------
+- Fixed position on right side
+- Width: 380px
+- Height: 100% viewport
+- Background: #2a2a2a (surface color)
+- Border-left: 1px solid #242838
+- Box shadow: -10px 0 30px rgba(0,0,0,0.3)
+- Slides in from right (transition: 0.3s ease)
+- Z-index: 1000
+- Vertical scrolling enabled
+
+6.2 PANEL HEADER
+----------------
+- Padding: 20px
+- Border-bottom: 1px solid #242838
+- Flexbox layout (space-between)
+- Title: "Edit Node" or "Create Node"
+- Font size: 18px
+- Font weight: 600
+- Action buttons on right side
+
+6.3 PANEL ACTIONS (Header)
+---------------------------
+6.3.1 Delete Button
+- Label: "Delete"
+- Color: #ff6b6b (red)
+- Border: 1px solid #ff6b6b
+- Background: transparent
+- Hover: background rgba(255,107,107,0.1)
+- Disabled state: 0.5 opacity
+- Only visible when editing existing node
+
+6.3.2 Close Button
+- Icon: "×" (multiplication sign)
+- Font size: 18px
+- Border: 1px solid #404040
+- Background: transparent
+- Hover: background rgba(255,255,255,0.05)
+- Padding: 6px 12px
+- Border radius: 3px
+
+6.4 TITLE FIELD
+---------------
+- Label: "Title"
+- Input type: text
+- Placeholder: "Enter node title"
+- Full width
+- Padding: 10px 12px
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border radius: 3px
+- Font size: 14px
+- Real-time validation
+- Focus state: border color changes to primary
+
+6.4.1 Color Indicator
+- Width: 40px
+- Height: 40px
+- Border radius: 3px
+- Border: 2px solid #404040
+- Displays current node color
+- Clickable to open color picker
+- Hover: border color primary, scale(1.05)
+- Positioned beside title input
+
+6.4.2 Duplicate Warning
+- Appears below title input
+- Color: #ff6b6b (red)
+- Font size: 12px
+- Message: "This title already exists"
+- Case-insensitive duplicate detection
+- Prevents node creation/update while visible
+
+6.5 DESCRIPTION FIELD
+---------------------
+6.5.1 Textarea (Edit Mode)
+- Label: "Description & Notes (Markdown Supported)"
+- Placeholder includes markdown examples:
+  * "- [ ] Unchecked todo"
+  * "- [x] Checked todo"
+  * "**bold**, *italic*, [links](url)"
+  * "[[ to link to other nodes"
+- Rows: 12
+- Min-height: 160px
+- Vertical resize enabled
+- Line-height: 1.5
+- Monospace-style for better editing
+- Shows when focused or empty
+
+6.5.2 Preview Mode
+- Rendered markdown display
+- Shows when textarea loses focus (if not empty)
+- Clickable to return to edit mode
+- Max-height: 200px
+- Vertical scroll
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 6px
+- Padding: 10px 12px
+- White-space: pre-wrap
+- Word-wrap: break-word
+
+6.6 CONNECTED NODES SECTION
+----------------------------
+- Label: "Connected Nodes"
+- Displays all nodes linked to current node
+- Empty state: "No connections" (italic, muted)
+- Max-height: 200px
+- Vertical scroll
+- Gap: 8px between items
+
+6.6.1 Connected Node Links
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 6px
+- Padding: 8px 12px
+- Font size: 14px
+- Flexbox layout (space-between)
+- Clickable to navigate to connected node
+- Hover: background rgba(170,170,170,0.1)
+- Hover: border color primary
+- Cursor: pointer
+
+6.6.2 Disconnect Button
+- Icon: "×"
+- Font size: 18px
+- Color: #888 (default)
+- Hover color: #ff4444 (red)
+- Hover scale: 1.2
+- Background: transparent
+- No border
+- Padding: 0 4px
+- Removes connection without confirmation
+
+========================================================================
+7. SEARCH & NAVIGATION
+========================================================================
+
+7.1 SEARCH BAR
+--------------
+- Position: Top center (absolute)
+- Width: 300px
+- Transform: translateX(-50%) for centering
+- Z-index: 100
+- Input padding: 10px 40px 10px 12px (space for clear button)
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 3px
+- Font size: 14px
+- Placeholder: "Search nodes..."
+
+7.2 SEARCH FUNCTIONALITY
+------------------------
+7.2.1 Standard Search
+- Searches both title and description
+- Case-insensitive matching
+- Real-time results (on input)
+- Highlights matching nodes
+- Dims non-matching nodes
+- Auto-zoom to fit search results
+
+7.2.2 Special Searches
+- "#todo" query: Finds nodes with unchecked todos
+- Matches pattern: "- [ ]" in description
+- Excludes checked todos: "- [x]"
+
+7.3 SEARCH VISUAL FEEDBACK
+--------------------------
+- Matching nodes: white stroke (3px), full opacity
+- Non-matching nodes: 0.3 opacity, dimmed colors
+- Clear button appears when search active
+- Clear button: "×" icon, font-size 18px
+- Position: absolute right (8px from edge)
+- Hover color changes from muted to primary text
+
+7.4 FILENAME INPUT
+------------------
+- Position: Top left (absolute, 20px from edges)
+- Width: 280px
+- Placeholder: "Untitled Map"
+- Updates browser tab title dynamically
+- Saved with map data
+- Font size: 14px
+- Font weight: 500
+
+7.5 SHOW ALL BUTTON
+-------------------
+- Label: "Show All"
+- Position: Next to filename input
+- Padding: 10px 16px
+- White-space: nowrap
+- Font size: 14px
+- Font weight: 500
+- Hover: background #2a2a2a, border primary
+- Active: scale(0.98)
+- Triggers zoom to fit all nodes
+
+========================================================================
+8. FILE MANAGEMENT
+========================================================================
+
+8.1 DOWNLOAD SVG BUTTON
+-----------------------
+- Label: "Download SVG"
+- Position: Top right (absolute, 20px from edges)
+- Z-index: 100
+- Padding: 10px 16px
+- Font size: 14px
+- Font weight: 500
+- White-space: nowrap
+- Hover: background #2a2a2a, border primary
+- Active: scale(0.98)
+
+8.2 SVG EXPORT FUNCTIONALITY
+-----------------------------
+- Exports current canvas as SVG file
+- Filename format: "{MapName}_{YYYY-MM-DD_HH-MM-SS}.svg"
+- Includes XML declaration
+- Preserves all visual elements
+- Current viewBox exported
+- Creates downloadable blob
+- Automatic cleanup of object URLs
+
+8.3 DATA PERSISTENCE
+--------------------
+- Hidden contenteditable div (id: "semanticMapData")
+- JSON format storage
+- Includes: nodes, links, filename
+- Auto-saves on every change
+- Structure:
+  {
+    "nodes": [...],
+    "links": [...],
+    "filename": "string"
+  }
+
+8.4 PAGE LEAVE WARNING
+----------------------
+- Browser warning before leaving page
+- Only shows if nodes exist (unsaved data)
+- Message: "You have unsaved data. Please save the page 
+  (Ctrl+S or Cmd+S) to persist your changes."
+- Standard beforeunload event
+
+========================================================================
+9. TIMELINE COMPONENT
+========================================================================
+
+9.1 TIMELINE BAR
+----------------
+- Position: Bottom of viewport
+- Height: 80px (expanded), 0px (collapsed)
+- Background: rgb(6 6 6 / 90%)
+- Backdrop-filter: blur(8px)
+- Z-index: 50
+- Horizontal scroll enabled
+- Padding: 12px 20px (expanded)
+- Transition: 0.3s ease for height and padding
+
+9.2 TIMELINE TOGGLE BUTTON
+---------------------------
+- Width: 36px
+- Height: 36px
+- Position: Bottom left (20px from left)
+- Background: rgb(6 6 6 / 90%)
+- Border: 1px solid rgba(255,255,255,0.1)
+- Border-radius: 6px
+- Icon: "▲" (collapsed) or "▼" (expanded)
+- Font size: 18px
+- Hover: background rgba(79,140,255,0.2)
+- Hover: border color primary
+- Transition: 0.3s ease
+- Position changes: bottom 80px (expanded), bottom 20px (collapsed)
+- Title: "Show Timeline" or "Hide Timeline"
+
+9.3 TIMELINE ENTRIES
+--------------------
+9.3.1 Entry Container
+- Min-width: 50px
+- Width: 60px
+- Height: 68px
+- Background: #2a2a2a (surface)
+- Border-radius: 3px
+- Padding: 6px 8px
+- Flex-shrink: 0
+- Gap: 8px between entries
+- Cursor: pointer
+
+9.3.2 Entry Content
+- Date: Font-size 10px, muted color
+- Format: Month (short) + day number
+- Time: Font-size 9px, muted color
+- Format: HH:MM (24-hour, no seconds)
+- Title: Font-size 12px, primary text color
+- Font-weight: 500
+- White-space: nowrap
+- Overflow: hidden
+- Text-overflow: ellipsis
+
+9.3.3 Entry Interaction
+- Hover: border color primary
+- Hover: background rgba(79,140,255,0.1)
+- Hover: translateY(-2px)
+- Click: zooms to node, opens edit panel
+- Click: selects node
+- Tooltip shows full title
+
+9.4 TIMELINE SORTING
+--------------------
+- Nodes sorted by creation date (ascending)
+- ID = timestamp, so sorting by ID
+- Oldest nodes on left, newest on right
+- Updates automatically when nodes added/deleted/renamed
+
+========================================================================
+10. IMAGE MANAGEMENT
+========================================================================
+
+10.1 IMAGE DROP ZONE
+--------------------
+- Border: 2px dashed #242838
+- Border-radius: 6px
+- Padding: 20px
+- Text-align: center
+- Cursor: pointer
+- Message: "Drop images here or click to select"
+- Hover: border color primary
+- Hover: background rgba(79,140,255,0.05)
+- Dragover state: border color primary
+- Dragover: background rgba(79,140,255,0.1)
+
+10.2 IMAGE UPLOAD METHODS
+--------------------------
+1. Click drop zone → file picker
+2. Drag and drop onto drop zone
+3. Paste from clipboard (Ctrl+V/Cmd+V)
+   - Only works when panel open and editing node
+   - Accepts multiple images
+   - Prevents default paste behavior for images
+
+10.3 IMAGE STORAGE
+------------------
+- Base64 encoding
+- Stored in node.images array
+- Format: 
+  {
+    data: "data:image/...",
+    comment: "string"
+  }
+- Multiple images per node supported
+- Deep copy on node duplication
+
+10.4 IMAGE THUMBNAILS
+---------------------
+- Width: 80px
+- Height: 80px
+- Border: 1px solid #404040
+- Border-radius: 6px
+- Overflow: hidden
+- Object-fit: cover
+- Background: #2a2a2a
+- Cursor: pointer
+- Active thumbnail (background): border color primary, 2px width
+- Flexbox layout with 10px gap
+- Wraps to multiple rows
+
+10.5 IMAGE CONTEXT MENU
+-----------------------
+- Right-click thumbnail to open
+- Fixed position at mouse coordinates
+- Z-index: 10000
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 6px
+- Padding: 8px 0
+- Box-shadow: 0 4px 12px rgba(0,0,0,0.3)
+- Menu items:
+  * "Set as Background"
+  * "Delete"
+- Item hover: background rgba(255,255,255,0.05)
+- Font size: 14px
+- Item padding: 8px 16px
+
+10.6 IMAGE MODAL (VIEWER)
+--------------------------
+10.6.1 Modal Overlay
+- Fixed position (full viewport)
+- Background: rgba(0,0,0,0.8)
+- Z-index: 10002
+- Flexbox centering
+- Cursor: pointer (to close)
+
+10.6.2 Modal Content
+- Width: 80vw
+- Height: 80vh
+- Max: 90vw × 90vh
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 8px
+- Box-shadow: 0 8px 24px rgba(0,0,0,0.5)
+- Cursor: default (prevents closing on content click)
+- Flexbox column layout
+
+10.6.3 Modal Image
+- Flex: 1 (fills available space)
+- Object-fit: contain
+- Object-position: center
+- Width: 100%
+- Min-height: 0
+
+10.6.4 Comment Section
+- Flex-shrink: 0
+- Padding: 16px
+- Border-top: 1px solid #404040
+- Background: #2a2a2a
+
+10.6.5 Comment Input
+- Width: 100%
+- Padding: 12px
+- Background: #1e1e1e
+- Border: 1px solid #404040
+- Border-radius: 6px
+- Font-size: 14px
+- Resize: vertical
+- Min-height: 60px
+- Focus: border #606060, background #252525
+- Placeholder: "Add a comment..."
+
+10.6.6 Modal Navigation
+- Arrow Left: Previous image (wraps to last)
+- Arrow Right: Next image (wraps to first)
+- Escape: Close modal
+- Click anywhere (except comment input): Close modal
+- Navigation disabled when typing in comment
+
+10.7 BACKGROUND IMAGE
+---------------------
+- One image can be set as node background
+- Displayed within circular node
+- Circular clipping (clip-path)
+- "Clear Background" button appears when set
+- Button width: 100%
+- Button style: outlined, full width
+- Thumbnail shows "active" indicator
+
+========================================================================
+11. MARKDOWN & TEXT FORMATTING
+========================================================================
+
+11.1 SUPPORTED MARKDOWN SYNTAX
+-------------------------------
+11.1.1 Inline Formatting
+- **bold** → <strong>bold</strong>
+- *italic* → <em>italic</em>
+- `code` → <code>code</code>
+- [text](url) → hyperlink
+
+11.1.2 Checkboxes
+- "- [ ] text" → Unchecked todo
+- "- [x] text" → Checked todo
+- "- [X] text" → Checked todo (case insensitive)
+
+11.1.3 Node Links
+- "[[NodeTitle|nodeId]]" → Link to another node
+- Autocomplete triggered by "[["
+- Creates visual link connection automatically
+- Clickable in preview mode
+- Broken links shown with strikethrough (red)
+
+11.2 AUTO-DETECTION FEATURES
+----------------------------
+11.2.1 URL Auto-linking
+- Detects: http://, https://, www., common TLDs
+- Automatically converts to clickable links
+- Opens in new tab (target="_blank")
+- Rel: "noopener noreferrer" for security
+
+11.2.2 Timestamp Addition
+- Automatic timestamp on checkbox lines
+- Format: <!-- ts:1234567890 -->
+- Added when textarea loses focus
+- Updated when checkbox state changes
+- Not visible in edit mode, displayed in preview
+
+11.3 CHECKBOX RENDERING
+-----------------------
+11.3.1 Visual Presentation
+- Actual HTML checkbox (interactive)
+- Width/height: 16px
+- Margin-top: 3px
+- Flex-shrink: 0
+- Cursor: pointer
+- Indentation supported (based on leading spaces)
+
+11.3.2 Checkbox States
+- Unchecked: Empty checkbox
+- Checked: Filled checkbox
+- Checked text: line-through decoration, 0.6 opacity
+- Click toggles state and updates markdown
+- Updates timestamp on state change
+
+11.3.3 Timestamp Display
+- Font-size: 10px
+- Color: #808080
+- Format: "MMM D, YYYY HH:MM" (24-hour)
+- Example: "Nov 13, 2025 14:30"
+- Displays below checkbox text
+
+11.4 NODE LINK AUTOCOMPLETE
+----------------------------
+11.4.1 Trigger
+- Type "[[" in description textarea
+- Dropdown appears below textarea
+- Z-index: 10000
+- Min-width: 250px
+- Max-width: 400px
+
+11.4.2 Dropdown Style
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 8px
+- Box-shadow: 0 8px 24px rgba(0,0,0,0.4)
+- Max-height: 200px
+- Vertical scroll
+
+11.4.3 Autocomplete Items
+- Padding: 10px 14px
+- Font-size: 13px
+- Border-bottom: 1px solid #333333
+- Last item: no border-bottom
+- Hover/selected: background rgba(106,106,106,0.2)
+- Transition: 100ms ease
+- Shows: Node title + ID
+
+11.4.4 Autocomplete Navigation
+- Arrow Down: Move down list
+- Arrow Up: Move up list
+- Enter: Select current item
+- Escape: Close autocomplete
+- Click item: Select and close
+- Filters as you type after "[["
+- Shows "No nodes found" when no matches
+
+11.4.5 Link Insertion
+- Format: [[NodeTitle|nodeId]]
+- Cursor positioned after inserted link
+- Triggers input event (saves to data)
+- Creates visual connection automatically
+- Focus returns to textarea
+
+========================================================================
+12. COLOR PICKER INTERFACE
+========================================================================
+
+12.1 COLOR INDICATOR (TRIGGER)
+-------------------------------
+- Width: 40px
+- Height: 40px
+- Border-radius: 3px
+- Border: 2px solid #404040
+- Shows current node color as background
+- Positioned beside title input
+- Cursor: pointer
+- Hover: border color primary, scale(1.05)
+- Click to toggle color picker dropdown
+
+12.2 COLOR PICKER DROPDOWN
+---------------------------
+12.2.1 Container
+- Fixed position (near color indicator)
+- Width: 280px
+- Background: #1e1e1e
+- Border: 1px solid #404040
+- Border-radius: 6px
+- Padding: 12px
+- Box-shadow: 0 4px 12px rgba(0,0,0,0.5)
+- Z-index: 1000
+- Smart positioning (stays on screen)
+
+12.2.2 Color Picker Section
+- Label: "PICK COLOR"
+- Font-size: 12px
+- Text-transform: uppercase
+- Letter-spacing: 0.5px
+- Color: muted
+- Margin-bottom: 6px
+
+12.2.3 Color Input
+- Native color picker (input type="color")
+- Width: 50px
+- Height: 36px
+- Border: 1px solid #404040
+- Border-radius: 3px
+- Padding: 2px
+- Background: #2a2a2a
+- Cursor: pointer
+
+12.2.4 Hex Input
+- Flex: 1 (fills remaining space)
+- Padding: 8px 10px
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 3px
+- Font-size: 14px
+- Placeholder: "#6a6a6a"
+- Pattern validation: ^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+- Focus: border color primary
+- Real-time sync with color picker
+
+12.3 COLOR SWATCHES SECTION
+----------------------------
+12.3.1 Container
+- Label: "RECENTLY USED"
+- Background: #2a2a2a
+- Border-radius: 3px
+- Min-height: 40px
+- Max-height: 120px
+- Vertical scroll
+- Padding: 8px
+- Flexbox layout with 6px gap
+- Wraps to multiple rows
+
+12.3.2 Individual Swatches
+- Width: 28px
+- Height: 28px
+- Border-radius: 3px
+- Border: 2px solid #404040
+- Cursor: pointer
+- Box-sizing: border-box
+- Transition: 0.2s
+- Hover: scale(1.15), border white
+- Shows color as background
+- Tooltip shows hex value
+
+12.3.3 Empty State
+- Content: "No custom colors yet"
+- Color: muted
+- Font-size: 12px
+- Centered (flex center)
+- Height: 24px
+
+12.4 COLOR PERSISTENCE
+----------------------
+- Custom colors tracked in Set
+- Excludes default color (#6a6a6a)
+- Persists across node edits
+- Updates when new color selected
+- Adds to palette only on color change/typing complete
+- Not during real-time slider movement
+
+========================================================================
+13. KEYBOARD SHORTCUTS & INTERACTIONS
+========================================================================
+
+13.1 GLOBAL SHORTCUTS
+---------------------
+- Escape: Close fly-in panel and deselect nodes
+- Ctrl+S / Cmd+S: Saves page (browser default)
+
+13.2 NODE INTERACTIONS
+----------------------
+- Click: Select node, open edit panel
+- Drag: Move node (if movement > 5px)
+- Shift + Click: Start connection from node
+- Alt + Drag: Copy node
+
+13.3 CANVAS INTERACTIONS
+------------------------
+- Click: Create new node OR deselect all
+- Drag: Box selection
+- Shift + Drag: Add to selection
+- Middle Mouse Button + Drag: Pan canvas
+- Scroll Wheel: Zoom in/out
+
+13.4 PANEL INPUTS
+-----------------
+- Title Input + Enter: Close panel (save)
+- Title Input + Escape: Close panel (cancel)
+- Description Textarea + Focus: Show textarea, hide preview
+- Description Textarea + Blur: Show preview, hide textarea
+- Description Preview + Click: Show textarea, focus
+
+13.5 AUTOCOMPLETE
+-----------------
+- Arrow Down: Select next suggestion
+- Arrow Up: Select previous suggestion
+- Enter: Insert selected suggestion
+- Escape: Close autocomplete
+- Tab: Close autocomplete
+
+13.6 IMAGE MODAL
+----------------
+- Arrow Left: Previous image
+- Arrow Right: Next image
+- Escape: Close modal
+- Click (outside comment): Close modal
+
+13.7 SEARCH
+-----------
+- Type: Real-time search
+- Clear button or Escape: Clear search
+
+========================================================================
+14. MODAL DIALOGS
+========================================================================
+
+14.1 DELETE CONFIRMATION MODAL
+-------------------------------
+14.1.1 Overlay
+- Fixed position (full viewport)
+- Background: rgba(0,0,0,0.7)
+- Z-index: 10001
+- Flexbox centering
+- Display: flex (when visible)
+
+14.1.2 Dialog
+- Width: 90% (max 400px)
+- Background: #2a2a2a
+- Border: 1px solid #404040
+- Border-radius: 8px
+- Box-shadow: 0 8px 24px rgba(0,0,0,0.5)
+
+14.1.3 Header
+- Padding: 20px
+- Border-bottom: 1px solid #242838
+- Title: "Confirm Deletion"
+- Font-size: 18px
+- Font-weight: 600
+
+14.1.4 Content
+- Padding: 20px
+- Font-size: 14px
+- Line-height: 1.5
+- Main message: "Are you sure you want to delete this node? 
+  This action cannot be undone."
+- Warning message: "All connections to this node will 
+  also be removed."
+- Warning color: #ff6b6b
+
+14.1.5 Actions
+- Padding: 20px
+- Border-top: 1px solid #242838
+- Flexbox layout (justify-end)
+- Gap: 12px
+
+14.1.6 Buttons
+- Cancel Button:
+  * Label: "Cancel"
+  * Background: transparent
+  * Border: 1px solid #404040
+  * Hover: background rgba(255,255,255,0.05)
+  * Padding: 8px 16px
+  * Font-size: 14px
+  
+- Confirm Button:
+  * Label: "Delete"
+  * Background: #ff6b6b (red)
+  * Color: white
+  * No border
+  * Hover: background #ff5252
+  * Padding: 8px 16px
+  * Font-size: 14px
+
+14.2 MODAL BEHAVIOR
+-------------------
+- Clicking overlay closes modal
+- Cancel button closes modal
+- Confirm button executes action and closes modal
+- No escape key handler (uses panel escape)
+
+========================================================================
+15. DATA PERSISTENCE
+========================================================================
+
+15.1 DATA STRUCTURE
+-------------------
+```json
+{
+  "nodes": [
+    {
+      "id": 1699891234567,
+      "title": "Node Title",
+      "description": "Markdown content...",
+      "x": 500,
+      "y": 300,
+      "color": "#6a6a6a",
+      "images": [
+        {
+          "data": "data:image/png;base64,...",
+          "comment": "Image description"
+        }
+      ],
+      "backgroundImage": "data:image/png;base64,..."
+    }
+  ],
+  "links": [
+    {
+      "source": 1699891234567,
+      "target": 1699891234568,
+      "weight": 1,
+      "controlPoints": [
+        { "x": 550, "y": 350 }
+      ]
+    }
+  ],
+  "filename": "My Semantic Map"
+}
+```
+
+15.2 STORAGE METHOD
+-------------------
+- Hidden contenteditable div (id: "semanticMapData")
+- JSON stringified with 2-space indentation
+- Div display: none
+- Div contenteditable: true (enables persistence)
+- Persists when page saved (Ctrl+S/Cmd+S)
+
+15.3 AUTO-SAVE TRIGGERS
+-----------------------
+- Node title change
+- Node description change
+- Node color change
+- Node position change (after drag)
+- Node creation
+- Node deletion
+- Connection creation
+- Connection deletion
+- Control point modification
+- Image addition/deletion
+- Background image set/clear
+- Filename change
+
+15.4 DATA LOADING
+-----------------
+- Loads on page initialization
+- Parses JSON from hidden div
+- Validates data structure
+- Migrates old formats if needed
+- Defaults to empty map if parse fails
+- Console warning on parse failure
+
+15.5 DATA MIGRATION
+-------------------
+- Old format: nodes with string IDs
+- New format: nodes with numeric timestamp IDs
+- Automatic migration on load
+- Old ID becomes title
+- New unique numeric ID assigned
+- Link references updated automatically
+
+========================================================================
+16. RESPONSIVE BEHAVIOR
+========================================================================
+
+16.1 VIEWPORT HANDLING
+----------------------
+- 100% width and height
+- Overflow: hidden
+- No scrollbars on main viewport
+- SVG preserves aspect ratio
+- ViewBox updates on window resize
+- Pan position preserved on resize
+
+16.2 PANEL BEHAVIOR
+-------------------
+- Fixed width (380px) - does not scale
+- Full height (100vh)
+- Vertical scrolling when content exceeds viewport
+- Slides in/out from right
+- Overlays canvas content
+- No responsive breakpoints (desktop-focused)
+
+16.3 CONTROL POSITIONING
+------------------------
+- Absolute positioned controls
+- Fixed pixel spacing (20px from edges)
+- Search bar centered with transform
+- Filename input: top left
+- Download button: top right
+- Timeline: bottom (full width)
+- Controls maintain position on zoom/pan
+
+16.4 FONT SCALING
+-----------------
+- System font stack for best rendering
+- Fixed pixel font sizes (no scaling)
+- Node labels: consistent size regardless of zoom
+- All UI text: fixed sizes (10px-18px range)
+
+========================================================================
+17. ACCESSIBILITY FEATURES
+========================================================================
+
+17.1 SEMANTIC HTML
+------------------
+- Main element for primary content
+- Button elements for all clickable actions
+- Input elements with proper types
+- Label elements for form fields
+- Heading hierarchy (h2, h3)
+
+17.2 ARIA ATTRIBUTES
+--------------------
+- SVG canvas: role="img"
+- SVG canvas: aria-label="Semantic map canvas"
+- Search clear button: aria-label="Clear search"
+- Button title attributes for tooltips
+- Timeline toggle: title attribute changes
+
+17.3 KEYBOARD NAVIGATION
+------------------------
+- All interactive elements keyboard accessible
+- Tab order: logical top-to-bottom, left-to-right
+- Escape key to close panels/modals
+- Enter key to submit/confirm
+- Arrow keys for navigation (autocomplete, image modal)
+- Focus visible on all interactive elements
+
+17.4 COLOR CONTRAST
+-------------------
+- Text on dark backgrounds: #e6e6e6 (high contrast)
+- Muted text: #a0a0a0 (readable contrast)
+- Border colors: sufficient contrast with backgrounds
+- Interactive element states visible (hover, focus, active)
+- Error states: high contrast red (#ff6b6b)
+
+17.5 FOCUS MANAGEMENT
+---------------------
+- Focus outline: native browser styling
+- Custom focus states: border color changes
+- Focus within: box-shadow on inputs
+- Focus trap: none (allows tabbing out)
+- Initial focus: title input when panel opens
+
+17.6 SCREEN READER CONSIDERATIONS
+----------------------------------
+- Descriptive button labels
+- Image alt text on thumbnails
+- Placeholder text on inputs
+- Title attributes for truncated text
+- Semantic structure with landmarks
+- Status messages not implemented (future enhancement)
+
+========================================================================
+END OF DOCUMENT
+========================================================================
 

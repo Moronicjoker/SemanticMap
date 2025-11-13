@@ -1,0 +1,1227 @@
+========================================================================
+SEMANTIC MAP - USER MANUAL
+========================================================================
+
+Version 1.0
+Last Updated: November 13, 2025
+
+Welcome to Semantic Map - A Visual Knowledge Mapping Tool
+
+========================================================================
+TABLE OF CONTENTS
+========================================================================
+
+1. INTRODUCTION
+   1.1 What is Semantic Map?
+   1.2 Who Should Use It?
+   1.3 Getting Started
+
+2. BASIC CONCEPTS
+   2.1 Understanding Nodes
+   2.2 Understanding Connections
+   2.3 The Canvas
+   2.4 The Timeline
+
+3. CREATING YOUR FIRST MAP
+   3.1 Naming Your Map
+   3.2 Creating Nodes
+   3.3 Adding Descriptions
+   3.4 Connecting Nodes
+
+4. NAVIGATING THE CANVAS
+   4.1 Moving Around (Panning)
+   4.2 Zooming In and Out
+   4.3 Finding Nodes with Search
+   4.4 Using Show All
+
+5. WORKING WITH NODES
+   5.1 Creating Nodes
+   5.2 Editing Node Information
+   5.3 Moving Nodes
+   5.4 Copying Nodes
+   5.5 Deleting Nodes
+   5.6 Selecting Multiple Nodes
+   5.7 Changing Node Colors
+
+6. WORKING WITH CONNECTIONS
+   6.1 Creating Connections
+   6.2 Bending Connections
+   6.3 Deleting Connections
+   6.4 Understanding Connection Thickness
+
+7. ORGANIZING YOUR THOUGHTS
+   7.1 Using Markdown Formatting
+   7.2 Creating To-Do Lists
+   7.3 Adding Timestamps
+   7.4 Linking to Other Nodes
+   7.5 Adding Web Links
+
+8. ADDING IMAGES
+   8.1 Uploading Images
+   8.2 Managing Images
+   8.3 Setting Background Images
+   8.4 Viewing Images
+   8.5 Adding Image Comments
+
+9. THE TIMELINE
+   9.1 Understanding the Timeline
+   9.2 Navigating Through Time
+   9.3 Showing/Hiding the Timeline
+
+10. SEARCHING AND FILTERING
+    10.1 Basic Search
+    10.2 Finding To-Dos
+    10.3 Clearing Search Results
+
+11. SAVING AND EXPORTING
+    11.1 Saving Your Work
+    11.2 Exporting as SVG
+
+12. KEYBOARD SHORTCUTS
+    12.1 Navigation Shortcuts
+    12.2 Editing Shortcuts
+    12.3 Selection Shortcuts
+
+13. TIPS AND TRICKS
+    13.1 Best Practices
+    13.2 Productivity Tips
+    13.3 Common Workflows
+
+14. TROUBLESHOOTING
+    14.1 Common Issues
+    14.2 Data Recovery
+    14.3 Browser Compatibility
+
+========================================================================
+1. INTRODUCTION
+========================================================================
+
+1.1 What is Semantic Map?
+--------------------------
+Semantic Map is a visual knowledge mapping tool that helps you organize
+your thoughts, ideas, and information in a spatial, interconnected way.
+Unlike traditional note-taking apps, Semantic Map lets you:
+
+• Create visual nodes representing concepts or ideas
+• Connect related nodes to show relationships
+• Navigate through your knowledge spatially
+• Add rich content including text, images, and to-do lists
+• See your thinking evolve over time with the timeline feature
+
+Think of it as a digital whiteboard that remembers everything and helps
+you see the connections between your ideas.
+
+
+1.2 Who Should Use It?
+-----------------------
+Semantic Map is perfect for:
+
+✓ Researchers organizing literature and findings
+✓ Students mapping course concepts and study materials
+✓ Project managers tracking tasks and dependencies
+✓ Writers planning stories and character relationships
+✓ Developers documenting system architectures
+✓ Anyone who thinks visually and wants to connect ideas
+
+
+1.3 Getting Started
+-------------------
+To start using Semantic Map:
+
+1. Open the SemanticMap.html file in your web browser
+2. You'll see a dark canvas - this is your workspace
+3. Click anywhere on the canvas to create your first node
+4. Type a title for your node
+5. You're ready to start mapping!
+
+NOTE: Semantic Map runs entirely in your browser. To save your work,
+use your browser's save function (Ctrl+S or Cmd+S) to save the HTML
+file. Your data is embedded in the file.
+
+========================================================================
+2. BASIC CONCEPTS
+========================================================================
+
+2.1 Understanding Nodes
+------------------------
+Nodes are the building blocks of your semantic map. Each node represents
+a single concept, idea, task, or piece of information.
+
+VISUAL CHARACTERISTICS:
+• Nodes appear as colored circles on the canvas
+• Each node has a text label below it
+• Node size changes based on how many connections it has:
+  - Small circles (18px): 0-2 connections
+  - Medium circles (28px): 3-5 connections
+  - Large circles (38px): 6+ connections
+
+WHAT A NODE CAN CONTAIN:
+• A title (required)
+• A detailed description with markdown formatting
+• Multiple images
+• To-do lists with checkboxes
+• Links to other nodes
+• Web links
+• A background image
+
+
+2.2 Understanding Connections
+------------------------------
+Connections are lines that link related nodes together. They represent
+relationships, dependencies, or associations between ideas.
+
+CONNECTION FEATURES:
+• Visual lines between nodes
+• Can be straight or curved (bendable)
+• Color matches the source node
+• Thickness indicates selection state
+• Can be deleted by double-clicking
+
+
+2.3 The Canvas
+--------------
+The canvas is your infinite workspace where nodes and connections live.
+
+CANVAS FEATURES:
+• Dark background for better focus
+• Infinite scrolling in all directions
+• Zoom from 0.1x to 10x magnification
+• Click empty space to create new nodes
+• Select multiple nodes with box selection
+
+
+2.4 The Timeline
+----------------
+The timeline shows your nodes in chronological order, allowing you to
+see how your map evolved over time.
+
+TIMELINE FEATURES:
+• Shows all nodes from oldest to newest
+• Displays creation date and time
+• Click any entry to jump to that node
+• Can be hidden/shown with toggle button
+
+========================================================================
+3. CREATING YOUR FIRST MAP
+========================================================================
+
+3.1 Naming Your Map
+--------------------
+1. Look at the top-left corner of the screen
+2. Click the text input that says "Untitled Map"
+3. Type a name for your map (e.g., "Research Project")
+4. Press Enter or click away
+5. Your browser tab will update with the new name
+
+
+3.2 Creating Nodes
+-------------------
+METHOD 1: Click on Canvas
+1. Click anywhere on the empty canvas
+2. A panel slides in from the right
+3. Type a title for your node
+4. Your node appears immediately
+5. Continue editing or close the panel
+
+METHOD 2: From Edit Panel
+1. If a panel is already open, close it first
+2. Click empty canvas space
+3. Follow steps above
+
+
+3.3 Adding Descriptions
+------------------------
+1. Create or click a node to open the edit panel
+2. Find the "Description & Notes" section
+3. Click in the large text area
+4. Type your content using markdown formatting
+5. Click outside the text area to see a formatted preview
+6. Click the preview to edit again
+
+TIP: Descriptions support rich formatting including bold, italic,
+links, and to-do lists. See Section 7 for details.
+
+
+3.4 Connecting Nodes
+---------------------
+1. Hold Shift and click the first node (source)
+2. A dashed line appears from the node
+3. Move your mouse - the line follows your cursor
+4. Click the second node (target) to complete the connection
+5. A solid line now connects the two nodes
+
+TO CANCEL: Click somewhere else or press Escape
+
+NOTE: You cannot create duplicate connections between the same nodes.
+
+========================================================================
+4. NAVIGATING THE CANVAS
+========================================================================
+
+4.1 Moving Around (Panning)
+----------------------------
+METHOD 1: Middle Mouse Button
+1. Press and hold the middle mouse button (scroll wheel click)
+2. Move your mouse to drag the canvas
+3. Release to stop panning
+
+The cursor changes to a "grabbing hand" during panning.
+
+TIP: Panning is the best way to explore large maps with many nodes.
+
+
+4.2 Zooming In and Out
+-----------------------
+1. Position your mouse over the area you want to examine
+2. Scroll your mouse wheel:
+   - Scroll DOWN (away from you) = Zoom IN
+   - Scroll UP (toward you) = Zoom OUT
+3. The canvas zooms toward/away from your cursor position
+
+ZOOM LIMITS:
+• Maximum zoom: 10x (very close)
+• Minimum zoom: 0.1x (very far)
+
+TIP: Zoom out to see the big picture, zoom in to focus on details.
+
+
+4.3 Finding Nodes with Search
+------------------------------
+1. Look at the top-center of the screen
+2. Click the search box
+3. Type any text to search for
+4. Matching nodes highlight in white
+5. Non-matching nodes fade (30% opacity)
+6. The view automatically frames search results
+
+WHAT GETS SEARCHED:
+• Node titles
+• Node descriptions
+• All text content
+
+TO CLEAR SEARCH:
+• Click the × button in the search box
+• Or delete all text manually
+
+
+4.4 Using Show All
+------------------
+The "Show All" button automatically frames all your nodes in view.
+
+WHEN TO USE IT:
+• After zooming in to see details
+• When nodes are off-screen
+• To get an overview of your entire map
+• After creating many new nodes
+
+TO USE:
+1. Click "Show All" button (top-left, next to filename)
+2. The view adjusts to fit all nodes with comfortable margins
+
+========================================================================
+5. WORKING WITH NODES
+========================================================================
+
+5.1 Creating Nodes
+-------------------
+See Section 3.2 for basic creation.
+
+ADDITIONAL TIPS:
+• Nodes are created where you click
+• You can create many nodes quickly by clicking multiple locations
+• Each node gets a unique ID (timestamp-based)
+• Node titles must be unique (you'll see a warning for duplicates)
+
+
+5.2 Editing Node Information
+-----------------------------
+TO OPEN EDIT PANEL:
+• Click any node
+
+PANEL SECTIONS:
+1. Title: Edit the node's name
+2. Color: Change the node's color
+3. Description: Add detailed notes
+4. Images: Attach visual content
+5. Connected Nodes: See and manage connections
+
+SAVING CHANGES:
+• Changes save automatically as you type
+• No save button needed
+• Close the panel when done (× button or Escape key)
+
+
+5.3 Moving Nodes
+----------------
+METHOD 1: Click and Drag
+1. Click on a node
+2. Keep holding and move your mouse
+3. The node follows your cursor
+4. Release to drop the node at new position
+
+METHOD 2: Move Multiple Nodes
+1. Select multiple nodes (see Section 5.6)
+2. Click and drag any selected node
+3. All selected nodes move together
+
+TIP: If you just click without moving (less than 5 pixels of movement),
+the edit panel opens instead of moving the node.
+
+
+5.4 Copying Nodes
+------------------
+To create a duplicate of a node:
+
+1. Hold Alt key (Option on Mac)
+2. Click and drag a node
+3. A copy appears at the original position
+4. Continue dragging to move the copy
+5. Release to place the copy
+
+WHAT GETS COPIED:
+✓ Title (with " (COPY)" appended)
+✓ Description and all formatting
+✓ All images
+✓ Node color
+✗ Connections (not copied)
+
+
+5.5 Deleting Nodes
+------------------
+1. Click a node to open the edit panel
+2. Click the red "Delete" button in the panel header
+3. A confirmation dialog appears
+4. Click "Delete" to confirm (or "Cancel" to abort)
+
+⚠️ WARNING: Deleting a node:
+• Cannot be undone
+• Removes ALL connections to that node
+• Removes the node from the timeline
+
+KEYBOARD TIP: Press Escape to cancel the delete dialog.
+
+
+5.6 Selecting Multiple Nodes
+-----------------------------
+METHOD 1: Box Selection
+1. Click on empty canvas and drag
+2. A blue selection rectangle appears
+3. All nodes inside the rectangle are selected
+4. Release to complete selection
+
+METHOD 2: Add to Selection
+1. Hold Shift key
+2. Drag a selection rectangle
+3. New nodes are ADDED to existing selection
+
+WORKING WITH SELECTION:
+• Selected nodes have a white dashed outline
+• Drag any selected node to move all selected nodes
+• Click empty canvas to deselect all
+• Press Escape to deselect all
+
+
+5.7 Changing Node Colors
+-------------------------
+1. Click a node to open the edit panel
+2. Click the colored square next to the title
+3. A color picker appears
+
+CHOOSING A COLOR:
+Option A: Use the color picker
+• Click and drag in the color picker
+• Or click the color input to use your OS picker
+
+Option B: Type a hex code
+• Type a hex color code (e.g., #FF5733)
+• Press Enter
+
+Option C: Use recent colors
+• Click any color swatch below the picker
+• Your recently used colors appear here
+
+The color updates immediately and saves automatically.
+
+========================================================================
+6. WORKING WITH CONNECTIONS
+========================================================================
+
+6.1 Creating Connections
+-------------------------
+See Section 3.4 for basic connection creation.
+
+ADDITIONAL TIPS:
+• Connections are bidirectional (no arrows)
+• The line color matches the source node
+• You can create connections while editing a node
+• Connections appear in the "Connected Nodes" section
+
+
+6.2 Bending Connections
+-----------------------
+Sometimes you want a curved connection instead of a straight line.
+
+TO ADD A CURVE:
+1. Select one of the connected nodes
+2. Click on the connection line
+3. A control point appears where you clicked
+4. Drag the control point to bend the line
+5. The line curves smoothly through the point
+
+CONTROL POINT FEATURES:
+• Maximum 2 control points per connection
+• Visible as small circles on the line
+• Drag to reposition
+• Double-click to remove
+• Move with nodes when both nodes are selected
+
+TIP: Use curved connections to avoid overlapping lines and improve
+visual clarity in complex maps.
+
+
+6.3 Deleting Connections
+-------------------------
+METHOD 1: Double-Click the Line
+1. Double-click any connection line
+2. The connection is immediately removed
+3. No confirmation needed
+
+METHOD 2: From Connected Nodes List
+1. Open the edit panel for either connected node
+2. Find the "Connected Nodes" section
+3. Click the × button next to the node name
+4. The connection is removed
+
+METHOD 3: Delete from Description
+1. If you linked nodes using [[syntax]] in description
+2. Delete the [[NodeName|id]] link from the text
+3. The visual connection is removed automatically
+
+
+6.4 Understanding Connection Thickness
+---------------------------------------
+Connection lines change thickness to show context:
+
+THIN (1px): Default state, neither node selected
+MEDIUM (2px): One connected node is selected
+THICK (3px): Hovering over the connection (when selectable)
+
+This helps you see which connections belong to your selected nodes.
+
+========================================================================
+7. ORGANIZING YOUR THOUGHTS
+========================================================================
+
+7.1 Using Markdown Formatting
+------------------------------
+Node descriptions support markdown formatting:
+
+BOLD TEXT:
+Type: **important text**
+Shows: important text (in bold)
+
+ITALIC TEXT:
+Type: *emphasized text*
+Shows: emphasized text (in italics)
+
+CODE/MONOSPACE:
+Type: `code snippet`
+Shows: code snippet (in monospace font)
+
+LINKS:
+Type: [Visit Website](https://example.com)
+Shows: Clickable link that opens in new tab
+
+PLAIN URLS:
+Type: https://example.com
+Shows: Automatically becomes clickable link
+
+TIP: Click outside the text area to see the formatted preview.
+Click the preview to edit again.
+
+
+7.2 Creating To-Do Lists
+-------------------------
+You can add interactive checkboxes to any node:
+
+UNCHECKED TODO:
+Type: - [ ] Task to complete
+Shows: ☐ Task to complete (clickable checkbox)
+
+CHECKED TODO:
+Type: - [x] Completed task
+Shows: ☑ Completed task (with strikethrough)
+
+WORKING WITH CHECKBOXES:
+• Click checkboxes in the preview to toggle state
+• Checked items show strikethrough and fade
+• Timestamps are added automatically (see next section)
+• Works with indentation: add spaces before the hyphen
+
+
+7.3 Adding Timestamps
+---------------------
+Semantic Map automatically adds timestamps to your to-do items:
+
+AUTOMATIC TIMESTAMPS:
+• Added when you check/uncheck a todo
+• Added when you stop editing (textarea loses focus)
+• Format: "MMM D, YYYY HH:MM" (e.g., "Nov 13, 2025 14:30")
+• Appears in small gray text below the todo
+
+WHAT IT TRACKS:
+• When a todo was created
+• When it was checked off
+• When it was unchecked
+
+This helps you track your progress and when tasks were completed.
+
+
+7.4 Linking to Other Nodes
+---------------------------
+You can create clickable links to other nodes in your map:
+
+TO CREATE A NODE LINK:
+1. Type [[ in the description
+2. An autocomplete menu appears
+3. Start typing a node name
+4. Use arrow keys to select a node
+5. Press Enter to insert the link
+
+RESULT:
+[[Node Title|12345]] becomes a clickable blue link
+
+AUTOCOMPLETE FEATURES:
+• Filters as you type
+• Shows node titles and IDs
+• Arrow Up/Down to navigate
+• Enter to select
+• Escape to cancel
+
+CLICKING NODE LINKS:
+• Click the link in preview mode
+• View zooms to that node
+• Edit panel opens for that node
+• A visual connection appears automatically
+
+TIP: This is the best way to link related concepts together!
+
+
+7.5 Adding Web Links
+---------------------
+URLs in your descriptions automatically become clickable:
+
+AUTOMATIC LINK DETECTION:
+• Type any URL: https://example.com
+• Or: www.example.com
+• Or: example.com
+• They become clickable automatically
+
+MARKDOWN LINKS:
+• Type: [Click here](https://example.com)
+• Shows: "Click here" as clickable text
+
+All links open in a new browser tab for safety.
+
+========================================================================
+8. ADDING IMAGES
+========================================================================
+
+8.1 Uploading Images
+--------------------
+You can attach multiple images to any node:
+
+METHOD 1: Click to Upload
+1. Open a node's edit panel
+2. Find the "Images" section
+3. Click the image drop zone
+4. Select one or more images from your computer
+5. Images upload and appear as thumbnails
+
+METHOD 2: Drag and Drop
+1. Open a node's edit panel
+2. Find the "Images" section
+3. Drag image files from your computer
+4. Drop them on the drop zone
+5. Images upload automatically
+
+METHOD 3: Paste from Clipboard
+1. Copy an image (from another app or screenshot)
+2. Open a node's edit panel
+3. Click in the panel
+4. Press Ctrl+V (or Cmd+V on Mac)
+5. The image is added to the node
+
+SUPPORTED FORMATS:
+• JPEG/JPG
+• PNG
+• GIF
+• WebP
+• Any format your browser supports
+
+
+8.2 Managing Images
+-------------------
+Each node can have unlimited images.
+
+VIEWING THUMBNAILS:
+• Appear below the image drop zone
+• 80×80 pixel squares
+• Show preview of each image
+• Click to view full size
+
+RIGHT-CLICK MENU:
+1. Right-click any thumbnail
+2. Choose an option:
+   • "Set as Background" - makes it the node's background
+   • "Delete" - removes the image from the node
+
+BACKGROUND INDICATOR:
+• Thumbnail with border = current background image
+• Only one background per node
+• Shows inside the node circle
+
+
+8.3 Setting Background Images
+------------------------------
+Give your nodes visual personality with background images:
+
+TO SET:
+1. Upload images to a node (see Section 8.1)
+2. Right-click the image thumbnail
+3. Select "Set as Background"
+4. The image appears inside the node circle
+
+TO CLEAR:
+1. Open the node's edit panel
+2. Find the "Images" section
+3. Click "Clear Background" button
+4. The node returns to solid color
+
+TIP: Use background images for:
+• Profile pictures on people nodes
+• Logos on project/company nodes
+• Icons to quickly identify node types
+• Visual interest in your map
+
+
+8.4 Viewing Images
+------------------
+TO VIEW FULL SIZE:
+1. Click any image thumbnail
+2. A modal viewer opens
+3. The image fills most of the screen
+
+MODAL VIEWER FEATURES:
+• Large display (80% of viewport)
+• Click anywhere to close
+• Press Escape to close
+• Navigate between images with arrow keys
+• Add comments to images
+
+NAVIGATION:
+• Left Arrow key: Previous image (wraps to last)
+• Right Arrow key: Next image (wraps to first)
+
+
+8.5 Adding Image Comments
+--------------------------
+Add context to your images with comments:
+
+1. Click an image thumbnail to open viewer
+2. Look at the bottom of the modal
+3. Click in the comment text area
+4. Type your comment
+5. Comments save automatically
+
+COMMENT FEATURES:
+• Unique comment per image
+• Saves as you type
+• Visible in image viewer
+• Helps remember context
+• Great for image sources, notes, or descriptions
+
+========================================================================
+9. THE TIMELINE
+========================================================================
+
+9.1 Understanding the Timeline
+-------------------------------
+The timeline shows all your nodes in chronological order.
+
+LOCATION:
+• Bottom of the screen
+• Horizontal scrollbar
+• Can be shown or hidden
+
+WHAT IT SHOWS:
+• Each node as a card
+• Creation date (MMM DD)
+• Creation time (HH:MM, 24-hour format)
+• Node title (truncated if long)
+
+BENEFITS:
+• See how your thinking evolved
+• Find nodes by when they were created
+• Navigate chronologically
+• Understand your workflow patterns
+
+
+9.2 Navigating Through Time
+----------------------------
+TO USE THE TIMELINE:
+1. Make sure timeline is visible (see next section)
+2. Scroll horizontally to browse nodes
+3. Click any timeline entry
+4. The map zooms to that node
+5. The edit panel opens for that node
+6. The node becomes selected
+
+SORTING:
+• Always sorted by creation date
+• Oldest on the left
+• Newest on the right
+• Updates automatically when nodes are added
+
+VISUAL FEEDBACK:
+• Hover effect: entry lifts slightly
+• Border changes color on hover
+• Clear visual indication of clickable items
+
+
+9.3 Showing/Hiding the Timeline
+--------------------------------
+The timeline can be collapsed to save screen space:
+
+TIMELINE BUTTON:
+• Located at bottom-left corner
+• Shows ▲ when timeline is hidden
+• Shows ▼ when timeline is visible
+
+TO TOGGLE:
+1. Click the button at bottom-left
+2. Timeline smoothly slides up/down
+3. Button moves with timeline
+
+WHEN TO HIDE:
+• Working on complex spatial layouts
+• Need maximum canvas space
+• Focusing on current task
+
+WHEN TO SHOW:
+• Reviewing project history
+• Finding old nodes
+• Understanding the evolution of your map
+
+========================================================================
+10. SEARCHING AND FILTERING
+========================================================================
+
+10.1 Basic Search
+-----------------
+Search helps you find nodes quickly in large maps:
+
+TO SEARCH:
+1. Click the search box at top-center
+2. Type your search term
+3. Results appear instantly
+4. Map zooms to show matching nodes
+
+WHAT HAPPENS:
+• Matching nodes: Highlighted with white outline
+• Non-matching nodes: Fade to 30% opacity
+• View: Automatically frames search results
+• Status: Clear (×) button appears
+
+SEARCH IS:
+✓ Case-insensitive
+✓ Searches titles
+✓ Searches descriptions
+✓ Real-time (as you type)
+✓ Visual highlighting
+
+
+10.2 Finding To-Dos
+-------------------
+Special search to find nodes with pending tasks:
+
+TO FIND TODOS:
+1. Click the search box
+2. Type exactly: #todo
+3. All nodes with unchecked todos highlight
+4. Checked todos are ignored
+
+This is perfect for:
+• Finding what needs to be done
+• Task management
+• Quick overview of pending work
+• Project status checks
+
+TIP: Use this daily to see what tasks are pending across your
+entire map!
+
+
+10.3 Clearing Search Results
+-----------------------------
+TO RETURN TO NORMAL VIEW:
+
+METHOD 1: Clear Button
+• Click the × button in the search box
+
+METHOD 2: Delete Text
+• Select all text in search box
+• Press Delete or Backspace
+
+METHOD 3: Escape Key
+• Press Escape (while search box is focused)
+
+AFTER CLEARING:
+• All nodes return to normal opacity
+• Highlights are removed
+• You can navigate normally again
+
+========================================================================
+11. SAVING AND EXPORTING
+========================================================================
+
+11.1 Saving Your Work
+---------------------
+⚠️ IMPORTANT: Semantic Map stores all data inside the HTML file.
+
+TO SAVE YOUR MAP:
+1. Press Ctrl+S (Windows/Linux) or Cmd+S (Mac)
+2. Your browser's save dialog appears
+3. Choose a location
+4. Click Save
+
+YOUR DATA INCLUDES:
+✓ All nodes (titles, descriptions, colors, positions)
+✓ All connections and their curves
+✓ All images (embedded as base64)
+✓ Timeline information
+✓ Map filename
+
+SAVING BEST PRACTICES:
+• Save frequently (after major changes)
+• Keep backups (save copies periodically)
+• Use descriptive filenames
+• Include dates in filename (e.g., "Project_2025-11-13.html")
+
+BEFORE CLOSING:
+If you try to close the page with unsaved work, you'll see a warning:
+"You have unsaved data. Please save the page (Ctrl+S or Cmd+S) to
+persist your changes."
+
+
+11.2 Exporting as SVG
+---------------------
+Export your map as an SVG image file:
+
+TO EXPORT:
+1. Click "Download SVG" button (top-right corner)
+2. SVG file downloads automatically
+3. Filename format: "MapName_YYYY-MM-DD_HH-MM-SS.svg"
+
+WHAT YOU GET:
+• Vector graphic of your current view
+• All visible nodes and connections
+• Current zoom and pan state
+• High-quality, scalable image
+
+USE CASES:
+• Include in presentations
+• Insert into documents
+• Print high-resolution maps
+• Archive map snapshots
+• Share read-only versions
+
+NOTE: SVG export is visual only. It does NOT include:
+✗ Node descriptions
+✗ Images
+✗ Interactive features
+✗ Edit capabilities
+
+For full functionality, always save the HTML file.
+
+========================================================================
+12. KEYBOARD SHORTCUTS
+========================================================================
+
+12.1 Navigation Shortcuts
+--------------------------
+Middle Mouse Button + Drag ... Pan the canvas
+Scroll Wheel ................ Zoom in/out at cursor
+Escape ...................... Close panel or deselect all
+
+
+12.2 Editing Shortcuts
+----------------------
+Click .................... Select node, open edit panel
+Ctrl + Click ........... Start connection from node
+Alt + Drag .............. Copy node
+Enter (in title) ........ Close panel (save changes)
+Escape (in panel) ....... Close panel (save changes)
+Ctrl+S / Cmd+S .......... Save HTML file
+
+
+12.3 Selection Shortcuts
+------------------------
+Click + Drag ............ Box selection (deselects previous)
+Shift + Click + Drag .... Add to selection
+Click empty canvas ...... Deselect all
+Escape .................. Deselect all
+
+
+12.4 Description Editor Shortcuts
+----------------------------------
+[[ ...................... Trigger node link autocomplete
+Arrow Up/Down ........... Navigate autocomplete
+Enter ................... Select from autocomplete
+Escape .................. Close autocomplete
+Click preview ........... Switch to edit mode
+Tab/Click away .......... Switch to preview mode
+
+
+12.5 Image Viewer Shortcuts
+----------------------------
+Left Arrow .............. Previous image (wraps)
+Right Arrow ............. Next image (wraps)
+Escape .................. Close image viewer
+Click anywhere .......... Close image viewer
+
+
+12.6 Search Shortcuts
+---------------------
+Click search box ........ Focus search
+Type .................... Search as you type
+Click × button .......... Clear search
+
+========================================================================
+13. TIPS AND TRICKS
+========================================================================
+
+13.1 Best Practices
+-------------------
+
+START WITH A CENTRAL CONCEPT:
+• Create your main topic as the first node
+• Branch out from there
+• Use connections to show relationships
+
+USE COLORS MEANINGFULLY:
+• Color-code by category or type
+• Keep a consistent color scheme
+• Example: Blue for concepts, green for actions, red for problems
+
+KEEP NODE TITLES CONCISE:
+• Short, descriptive titles
+• Put details in the description
+• Think: "What is this at a glance?"
+
+USE THE TIMELINE FOR JOURNALING:
+• Each node has a creation timestamp
+• Great for research logs
+• Track when ideas emerged
+
+LEVERAGE NODE LINKS:
+• Link related concepts in descriptions
+• Creates both visual and text connections
+• Helps you navigate complex networks
+
+REGULAR CLEANUP:
+• Delete obsolete nodes
+• Reorganize spatially as map grows
+• Use colors to show current vs. archived
+
+
+13.2 Productivity Tips
+----------------------
+
+USE SEARCH TO FOCUS:
+• Search for specific topics
+• Non-matching nodes fade away
+• Reduces visual clutter
+
+BOX SELECT FOR BATCH OPERATIONS:
+• Select multiple related nodes
+• Move them together
+• Helps reorganize sections of your map
+
+COPY NODES FOR TEMPLATES:
+• Create a template node with structure
+• Alt+drag to copy it
+• Edit the copy for new entries
+• Great for consistent formatting
+
+USE #TODO SEARCH DAILY:
+• Type #todo in search
+• Instantly see all pending tasks
+• No need to search each node
+
+BACKGROUND IMAGES FOR QUICK IDENTIFICATION:
+• Add logos, icons, or pictures
+• Quickly identify nodes at a glance
+• Works even when zoomed out
+
+
+13.3 Common Workflows
+---------------------
+
+RESEARCH WORKFLOW:
+1. Create a node for each source/paper
+2. Add key findings in description
+3. Link related nodes
+4. Use colors for themes
+5. Timeline shows research progression
+
+PROJECT PLANNING:
+1. Create nodes for tasks/milestones
+2. Use checkboxes for subtasks
+3. Connect dependencies
+4. Search #todo to see pending work
+5. Move nodes spatially to show phases
+
+BRAINSTORMING:
+1. Quickly create nodes (click, type, click)
+2. Don't worry about organization yet
+3. Add connections as relationships emerge
+4. Use Show All to see everything
+5. Rearrange spatially for clarity
+
+MEETING NOTES:
+1. Create a node for the meeting
+2. Add date and attendees in description
+3. Create nodes for action items
+4. Link to related project nodes
+5. Use checkboxes for follow-ups
+
+LEARNING/STUDYING:
+1. Create nodes for key concepts
+2. Link prerequisites and dependencies
+3. Add definitions in descriptions
+4. Use images for diagrams
+5. Connect concepts to show relationships
+
+========================================================================
+14. TROUBLESHOOTING
+========================================================================
+
+14.1 Common Issues
+------------------
+
+ISSUE: "I can't find my nodes"
+SOLUTION: Click "Show All" button at top-left
+
+ISSUE: "Search isn't working"
+SOLUTION: 
+• Make sure you're clicking in the search box
+• Text must be in title or description
+• Try different keywords
+
+ISSUE: "Connection won't create"
+SOLUTION:
+• Make sure you're holding Shift when clicking first node
+• Connection might already exist (duplicates not allowed)
+• Try clicking closer to the center of the target node
+
+ISSUE: "Node won't move"
+SOLUTION:
+• You might be clicking too lightly (drag it more than 5 pixels)
+• If it opens the panel, try clicking and dragging in one motion
+
+ISSUE: "Panel won't close"
+SOLUTION:
+• Click the × button in panel header
+• Or press Escape key
+• Check if you're in a text field (click outside first)
+
+ISSUE: "My changes aren't saving"
+SOLUTION:
+• Semantic Map auto-saves to its internal data
+• You must save the HTML file (Ctrl+S / Cmd+S) to persist
+• Without saving the file, data is lost when page closes
+
+ISSUE: "Timeline is missing"
+SOLUTION:
+• Look for button at bottom-left corner
+• Click it to show timeline
+• Timeline might be collapsed
+
+ISSUE: "Images won't upload"
+SOLUTION:
+• Make sure you have a node's edit panel open
+• Try smaller images (very large images may be slow)
+• Check browser console for errors
+• Try a different image format
+
+
+14.2 Data Recovery
+------------------
+
+IF YOU CLOSED WITHOUT SAVING:
+• Data is lost if page was closed
+• Browser might have page in history (Back button)
+• Check browser's "Recently Closed" feature
+• Prevention: Save frequently!
+
+IF FILE WON'T OPEN:
+• Make sure you're opening the .html file
+• Try different browser
+• Check file isn't corrupted (file size should be > 100KB if it has data)
+
+BACKUP STRATEGY:
+• Save multiple versions with dates in filename
+• Example: "MyMap_2025-11-13_morning.html"
+• Keep backups in cloud storage
+• Before major changes, save a copy first
+
+
+14.3 Browser Compatibility
+---------------------------
+
+RECOMMENDED BROWSERS:
+✓ Google Chrome (latest version)
+✓ Microsoft Edge (latest version)
+✓ Mozilla Firefox (latest version)
+✓ Safari (latest version)
+
+MINIMUM REQUIREMENTS:
+• Modern browser (2020 or newer)
+• JavaScript enabled
+• Cookies enabled
+• Minimum 1280×720 screen resolution
+• 4GB RAM (for large maps with images)
+
+PERFORMANCE TIPS:
+• Limit images to reasonable sizes (< 2MB each)
+• Very large maps (500+ nodes) may be slow
+• Close other browser tabs for better performance
+• Zoom out less frequently on older computers
+
+KNOWN LIMITATIONS:
+• Does not work in Internet Explorer
+• Mobile browsers not optimized (desktop only)
+• Some keyboard shortcuts may vary by OS
+
+========================================================================
+
+NEED MORE HELP?
+---------------
+• Review the UI Requirements document for technical details
+• Experiment! You can't break anything permanently
+• Save a backup before trying advanced features
+• Start simple and add complexity gradually
+
+========================================================================
+
+ENJOY MAPPING YOUR KNOWLEDGE!
+
+Semantic Map helps you think visually, connect ideas, and organize
+complex information. The more you use it, the more powerful it becomes.
+
+Happy mapping!
+
+========================================================================
+END OF USER MANUAL
+========================================================================
+
