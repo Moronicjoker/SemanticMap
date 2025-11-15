@@ -1662,15 +1662,16 @@
               
               // Sync color picker with hex input (real-time visual update)
               colorInput.addEventListener("input", (e) => {
-                const color = e.target.value.toUpperCase();
-                colorHexInput.value = color;
+                const color = e.target.value.toLowerCase(); // Normalize to lowercase
+                colorHexInput.value = color.toUpperCase(); // Display in uppercase
                 updateColorIndicator(color);
                 updateNodeColor(color, false); // false = don't add to palette yet
               });
               
               // Add to palette only when user finishes selecting color
               colorInput.addEventListener("change", (e) => {
-                updateNodeColor(e.target.value, true); // true = add to palette
+                const normalizedColor = e.target.value.toLowerCase(); // Normalize to lowercase
+                updateNodeColor(normalizedColor, true); // true = add to palette
               });
               
               // Sync hex input with color picker
@@ -1678,9 +1679,14 @@
                 const hex = e.target.value;
                 // Validate hex color
                 if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) {
-                  colorInput.value = hex;
-                  updateColorIndicator(hex);
-                  updateNodeColor(hex, true); // Add to palette when typing hex manually
+                  const normalizedHex = hex.toLowerCase(); // Normalize to lowercase
+                  colorInput.value = normalizedHex;
+                  updateColorIndicator(normalizedHex);
+                  updateNodeColor(normalizedHex, true); // Add to palette when typing hex manually
+                  // Keep uppercase display in hex input field
+                  if (e.target.value !== normalizedHex.toUpperCase()) {
+                    e.target.value = normalizedHex.toUpperCase();
+                  }
                 }
               });
             }
@@ -2623,8 +2629,13 @@
             
             // Determine line color: use node color if both nodes have the same color, otherwise default gray
             let lineColor = "#505050"; // default gray
-            if (sourceNode && targetNode && sourceNode.color && targetNode.color && sourceNode.color === targetNode.color) {
-              lineColor = sourceNode.color;
+            if (sourceNode && targetNode && sourceNode.color && targetNode.color) {
+              // Normalize colors to lowercase for comparison
+              const sourceColor = sourceNode.color.toLowerCase();
+              const targetColor = targetNode.color.toLowerCase();
+              if (sourceColor === targetColor) {
+                lineColor = sourceColor; // Use normalized lowercase
+              }
             }
             
             // Initialize controlPoints array if not present
@@ -3637,9 +3648,9 @@
             const colorInput = document.getElementById("nodeColorInput");
             const colorHexInput = document.getElementById("nodeColorHexInput");
             const colorIndicator = document.getElementById("currentColorIndicator");
-            const nodeColor = node.color || "#6a6a6a";
+            const nodeColor = (node.color || "#6a6a6a").toLowerCase(); // Normalize to lowercase
             if (colorInput) colorInput.value = nodeColor;
-            if (colorHexInput) colorHexInput.value = nodeColor.toUpperCase();
+            if (colorHexInput) colorHexInput.value = nodeColor.toUpperCase(); // Display in uppercase
             if (colorIndicator) colorIndicator.style.backgroundColor = nodeColor;
             
             // Update color swatches
@@ -4521,11 +4532,12 @@
               const colorHexInput = document.getElementById("nodeColorHexInput");
               const colorIndicator = document.getElementById("currentColorIndicator");
               
-              if (colorInput) colorInput.value = color;
-              if (colorHexInput) colorHexInput.value = color.toUpperCase();
-              if (colorIndicator) colorIndicator.style.backgroundColor = color;
+              const normalizedColor = color.toLowerCase(); // Normalize to lowercase
+              if (colorInput) colorInput.value = normalizedColor;
+              if (colorHexInput) colorHexInput.value = normalizedColor.toUpperCase(); // Display in uppercase
+              if (colorIndicator) colorIndicator.style.backgroundColor = normalizedColor;
               
-              updateNodeColor(color);
+              updateNodeColor(normalizedColor);
             });
             
             swatchesContainer.appendChild(swatch);
@@ -4543,19 +4555,21 @@
             return; // Invalid color, don't update
           }
 
+          // Normalize color to lowercase for storage
+          const normalizedColor = color.toLowerCase();
+
           // Add color to custom colors set (exclude default color) only if addToPalette is true
           if (addToPalette === true) {
-            const normalizedColor = color.toLowerCase();
             if (normalizedColor !== "#6a6a6a") {
               customColors.add(normalizedColor);
               updateColorSwatches();
             }
           }
 
-          // Update node color
+          // Update node color - always store in lowercase
           currentData = {
             nodes: currentData.nodes.map(n => 
-              n.id === editingNodeId ? { ...n, color: color } : n
+              n.id === editingNodeId ? { ...n, color: normalizedColor } : n
             ),
             links: currentData.links
           };
