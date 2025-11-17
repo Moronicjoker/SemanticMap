@@ -394,7 +394,7 @@
       }
 
       .fly-in-panel-field textarea {
-        min-height: 160px;
+        min-height: 320px;
         line-height: 1.5;
       }
 
@@ -538,8 +538,8 @@
         color: var(--text);
         font-size: 14px;
         line-height: 1.5;
-        min-height: 40px;
-        max-height: 200px;
+        min-height: 80px;
+        max-height: 400px;
         overflow-y: auto;
         white-space: pre-wrap;
         word-wrap: break-word;
@@ -1139,7 +1139,7 @@
           </div>
           <div class="fly-in-panel-field">
             <label for="nodeDescriptionInput">Description & Notes (Markdown Supported)</label>
-            <textarea id="nodeDescriptionInput" placeholder="Enter node description, notes, and todos. Supports Markdown:\n- [ ] Unchecked todo\n- [x] Checked todo\n**bold**, *italic*, [links](url)\n[[ to link to other nodes" rows="12"></textarea>
+            <textarea id="nodeDescriptionInput" placeholder="Enter node description, notes, and todos. Supports Markdown:\n- [ ] Unchecked todo\n- [x] Checked todo\n**bold**, *italic*, [links](url)\n[[ to link to other nodes" rows="24"></textarea>
             <div id="descriptionPreview" class="description-preview"></div>
           </div>
           <div class="fly-in-panel-field">
@@ -4342,6 +4342,15 @@
             // Parse markdown and convert to HTML
             const lines = text.split('\n');
             lines.forEach((line, index) => {
+              // Check for horizontal rule: ---
+              const hrMatch = line.match(/^(\s*)(-{3,})(\s*)$/);
+              if (hrMatch) {
+                const hr = document.createElement('hr');
+                hr.style.margin = '8px 0';
+                preview.appendChild(hr);
+                return; // Skip to next line
+              }
+              
               // Check for markdown checkbox syntax: - [ ] or - [x]
               const checkboxMatch = line.match(/^(\s*)-\s*\[([ xX])\]\s*(.*)$/);
               if (checkboxMatch) {
